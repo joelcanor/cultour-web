@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/router'
 
 const places = [
   // Jalpan de Serra
@@ -266,6 +267,7 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
 }
 
 export default function Home() {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [selectedMunicipio, setSelectedMunicipio] = useState('Todos')
 
@@ -293,21 +295,25 @@ export default function Home() {
         boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-          <div style={{ 
-            width: '50px', 
-            height: '50px', 
-            borderRadius: '50%', 
-            overflow: 'hidden',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-            background: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem'
-          }}>
-            🏔️
-          </div>
+              <div style={{ 
+      width: '50px', 
+      height: '50px', 
+      borderRadius: '50%', 
+      overflow: 'hidden',
+      boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+      background: '#fff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <img 
+        src="logo.jpg" 
+        alt="Logo" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      />
+    </div>
           <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', letterSpacing: '2px' }}>CULTOUR</h2>
+          
         </div>
         <nav>
           <ul style={{ display: 'flex', gap: '2rem', listStyle: 'none', margin: 0, padding: 0 }}>
@@ -330,6 +336,25 @@ export default function Home() {
             ))}
           </ul>
         </nav>
+        <button
+  onClick={() => router.push('/auth/login')}
+  style={{
+    backgroundColor: 'white',
+    color: '#004e92',
+    padding: '0.5rem 1rem',
+    border: 'none',
+    borderRadius: '0.5rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    marginLeft: '1rem'
+  }}
+  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+>
+  Iniciar sesión
+</button>
+
       </header>
 
       <main style={{ 
