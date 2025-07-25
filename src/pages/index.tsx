@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
+import { supabase } from '@/lib/supabaseClient'
 
 const places = [
   // Jalpan de Serra
@@ -270,6 +271,43 @@ export default function Home() {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [selectedMunicipio, setSelectedMunicipio] = useState('Todos')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState(null)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  // Verificar autenticación al cargar el componente
+ // Asegúrate de tener esta línea al inicio
+
+useEffect(() => {
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user) {
+      setIsAuthenticated(true)
+      setUser(session.user)
+    }
+  }
+
+  checkAuth()
+
+  // Suscribirse a cambios en sesión
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    setIsAuthenticated(!!session?.user)
+    setUser(session?.user ?? null)
+  })
+
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+}, [])
+
+
+const handleLogout = async () => {
+  await supabase.auth.signOut()
+  setIsAuthenticated(false)
+  setUser(null)
+  setShowUserMenu(false)
+}
+
 
   const filtered = places.filter(p => {
     const matchesSearch = `${p.name} ${p.description}`.toLowerCase().includes(search.toLowerCase())
@@ -295,66 +333,219 @@ export default function Home() {
         boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-              <div style={{ 
-      width: '50px', 
-      height: '50px', 
-      borderRadius: '50%', 
-      overflow: 'hidden',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-      background: '#fff',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      <img 
-        src="logo.jpg" 
-        alt="Logo" 
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-      />
-    </div>
+          <div style={{ 
+            width: '50px', 
+            height: '50px', 
+            borderRadius: '50%', 
+            overflow: 'hidden',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <img 
+              src="logo.jpg" 
+              alt="Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
           <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', letterSpacing: '2px' }}>CULTOUR</h2>
-          
         </div>
+
         <nav>
-          <ul style={{ display: 'flex', gap: '2rem', listStyle: 'none', margin: 0, padding: 0 }}>
-            {['Inicio', 'Recomendaciones', 'Sobre Nosotros', 'Contacto'].map(item => (
-              <li key={item}>
-                <a href="#" style={{ 
-                  color: 'white', 
-                  textDecoration: 'none', 
-                  fontWeight: '500',
-                  transition: 'all 0.3s ease',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem'
-                }}
-                onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                onMouseLeave={e => e.target.style.background = 'transparent'}
+          <ul style={{
+            display: 'flex',
+            gap: '2rem',
+            listStyle: 'none',
+            margin: 0,
+            padding: 0
+          }}>
+            {[
+              { name: 'Inicio', href: '/' },
+              { name: 'Recomendaciones', href: '/Recomendaciones' },
+              { name: 'Nosotros', href: '/osotros' },
+              { name: 'Contacto', href: '/contacto' }
+            ].map(item => (
+              <li key={item.name}>
+                <a
+                  href={item.href}
+                  style={{
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    transition: 'all 0.3s ease',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem'
+                  }}
+                  onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.2)'}
+                  onMouseLeave={e => e.target.style.background = 'transparent'}
                 >
-                  {item}
+                  {item.name}
                 </a>
               </li>
             ))}
           </ul>
         </nav>
-        <button
-  onClick={() => router.push('/auth/login')}
-  style={{
-    backgroundColor: 'white',
-    color: '#004e92',
-    padding: '0.5rem 1rem',
-    border: 'none',
-    borderRadius: '0.5rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    marginLeft: '1rem'
-  }}
-  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
->
-  Iniciar sesión
-</button>
 
+        {/* Sección de autenticación */}
+        <div style={{ position: 'relative' }}>
+          {!isAuthenticated ? (
+            <button
+              onClick={() => router.push('/auth/login')}
+              style={{
+                backgroundColor: 'white',
+                color: '#004e92',
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                marginLeft: '1rem'
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+            >
+              Iniciar sesión
+            </button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {/* Avatar del usuario */}
+              <div
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '2rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              >
+                <div style={{
+                  width: '35px',
+                  height: '35px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem'
+                }}>
+                  👤
+                </div>
+                <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
+                  {user?.email?.split('@')[0] || 'Usuario'}{user?.name || 'Usuario'}
+                  
+                </span>
+                <span style={{ fontSize: '0.8rem' }}>
+                  {showUserMenu ? '▲' : '▼'}
+                </span>
+              </div>
+
+              {/* Menú desplegable del usuario */}
+              {showUserMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  background: 'white',
+                  borderRadius: '0.8rem',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                  minWidth: '200px',
+                  overflow: 'hidden',
+                  zIndex: 1000
+                }}>
+                  <div style={{
+                    padding: '1rem',
+                    borderBottom: '1px solid #eee',
+                    color: '#333'
+                  }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                      {user?.name || 'Usuario'}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                      {user?.email || 'usuario@email.com'}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      // Aquí puedes agregar navegación al perfil
+                      console.log('Ir al perfil')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem 1rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#333',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.2s ease'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    👤 Mi Perfil
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      // Aquí puedes agregar navegación a favoritos
+                      console.log('Ir a favoritos')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem 1rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#333',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.2s ease'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    ❤️ Mis Favoritos
+                  </button>
+                  
+                  <div style={{ borderTop: '1px solid #eee' }}>
+                    <button
+                      onClick={handleLogout}
+                      style={{
+                        width: '100%',
+                        padding: '0.8rem 1rem',
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#dc3545',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background 0.2s ease'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#fff5f5'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      🚪 Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <main style={{ 
