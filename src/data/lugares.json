@@ -1,0 +1,114 @@
+[
+  {
+    "id": "1",
+    "nombre": "Misión de Santiago de Jalpan de Serra",
+    "descripcion": "Patrimonio Mundial UNESCO y centro histórico de la Sierra Gorda.",
+    "municipio": "Jalpan de Serra",
+    "imagen": "/jalpan.jpg"
+  },
+  {
+    "id": "2",
+    "nombre": "Museo Histórico de la Sierra Gorda",
+    "descripcion": "Exhibiciones culturales e históricas de la región.",
+    "municipio": "Jalpan de Serra",
+    "imagen": "/museo_historico.jpg"
+  },
+  {
+    "id": "3",
+    "nombre": "Zona Arqueológica de Tancama",
+    "descripcion": "Sitio arqueológico con vestigios de culturas prehispánicas.",
+    "municipio": "Jalpan de Serra",
+    "imagen": "/tancama.jpg"
+  },
+  {
+    "id": "4",
+    "nombre": "Puente de Dios / Presa Río Adentro",
+    "descripcion": "Paraje natural con pozas cristalinas y cascadas escondidas.",
+    "municipio": "Jalpan de Serra",
+    "imagen": "/puentede_dios.jpeg"
+  },
+  {
+    "id": "5",
+    "nombre": "Paraje Las Adjuntas (Ayutla)",
+    "descripcion": "Paisaje natural espectacular con ríos y montañas.",
+    "municipio": "Arroyo Seco",
+    "imagen": "/las_adjuntas.jpg"
+  },
+  {
+    "id": "6",
+    "nombre": "Misión de San Miguel Concá",
+    "descripcion": "Arquitectura barroca en un entorno cultural y natural.",
+    "municipio": "Arroyo Seco",
+    "imagen": "/conca.jpg"
+  },
+  {
+    "id": "7",
+    "nombre": "Río Santa María en kayak",
+    "descripcion": "Aventura acuática navegando por aguas cristalinas.",
+    "municipio": "Arroyo Seco",
+    "imagen": "/rio_santa_maria.jpg"
+  },
+  {
+    "id": "8",
+    "nombre": "Sótano del Barro",
+    "descripcion": "Hábitat de guacamayas verdes y aventura para exploradores.",
+    "municipio": "Arroyo Seco",
+    "imagen": "/sotano_barro.jpg"
+  },
+  {
+    "id": "9",
+    "nombre": "Misión de Santa María del Agua de Landa de Matamoros",
+    "descripcion": "Misión franciscana con arquitectura colonial excepcional.",
+    "municipio": "Landa de Matamoros",
+    "imagen": "/landa_agua.jpg"
+  },
+  {
+    "id": "10",
+    "nombre": "Misión de San Francisco de Tilaco",
+    "descripcion": "Joya arquitectónica con fachada barroca única.",
+    "municipio": "Landa de Matamoros",
+    "imagen": "/tilaco.jpg"
+  },
+  {
+    "id": "11",
+    "nombre": "Zona de fósiles",
+    "descripcion": "Sitio paleontológico con vestigios de vida prehistórica.",
+    "municipio": "Landa de Matamoros",
+    "imagen": "/fosiles.webp"
+  },
+  {
+    "id": "12",
+    "nombre": "Mirador Cuatro Palos",
+    "descripcion": "Vista épica entre montañas y nubes en Pinal de Amoles.",
+    "municipio": "Pinal de Amoles",
+    "imagen": "/cuatro_palos.webp"
+  },
+  {
+    "id": "13",
+    "nombre": "Río Escanela y Puente de Dios",
+    "descripcion": "Sendero con ríos, puentes colgantes y cascadas.",
+    "municipio": "Pinal de Amoles",
+    "imagen": "/rio_escanela.webp"
+  },
+  {
+    "id": "14",
+    "nombre": "Exconvento / Misión de Bucareli",
+    "descripcion": "Ruinas históricas con arquitectura colonial y vistas panorámicas.",
+    "municipio": "Pinal de Amoles",
+    "imagen": "/bucareli.jpeg"
+  },
+  {
+    "id": "15",
+    "nombre": "Templo de San José",
+    "descripcion": "Templo colonial con arte sacro y arquitectura tradicional.",
+    "municipio": "Pinal de Amoles",
+    "imagen": "/sanjosepinal.jpg"
+  },
+  {
+    "id": "16",
+    "nombre": "Mirador de Cristal",
+    "descripcion": "Plataforma de cristal con vistas espectaculares de la sierra.",
+    "municipio": "Pinal de Amoles",
+    "imagen": "/mirador_cristal.jpeg"
+  }
+]

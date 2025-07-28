@@ -2,128 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 
-const places = [
-  // Jalpan de Serra
-  {
-    id: '1',
-    url: '/jalpan.jpg',
-    name: 'Misión de Santiago de Jalpan de Serra',
-    description: 'Patrimonio Mundial UNESCO y centro histórico de la Sierra Gorda.',
-    municipio: 'Jalpan de Serra'
-  },
-  {
-    id: '2',
-    url: '/museo_historico.jpg',
-    name: 'Museo Histórico de la Sierra Gorda',
-    description: 'Exhibiciones culturales e históricas de la región.',
-    municipio: 'Jalpan de Serra'
-  },
-  {
-    id: '3',
-    url: '/tancama.jpg',
-    name: 'Zona Arqueológica de Tancama',
-    description: 'Sitio arqueológico con vestigios de culturas prehispánicas.',
-    municipio: 'Jalpan de Serra'
-  },
-  {
-    id: '4',
-    url: '/puentede_dios.jpeg',
-    name: 'Puente de Dios / Presa Río Adentro',
-    description: 'Paraje natural con pozas cristalinas y cascadas escondidas.',
-    municipio: 'Jalpan de Serra'
-  },
-  
-  // Arroyo Seco
-  {
-    id: '5',
-    url: '/las_adjuntas.jpg',
-    name: 'Paraje Las Adjuntas (Ayutla)',
-    description: 'Paisaje natural espectacular con ríos y montañas.',
-    municipio: 'Arroyo Seco'
-  },
-  {
-    id: '6',
-    url: '/conca.jpg',
-    name: 'Misión de San Miguel Concá',
-    description: 'Arquitectura barroca en un entorno cultural y natural.',
-    municipio: 'Arroyo Seco'
-  },
-  {
-    id: '7',
-    url: '/rio_santa_maria.jpg',
-    name: 'Río Santa María en kayak',
-    description: 'Aventura acuática navegando por aguas cristalinas.',
-    municipio: 'Arroyo Seco'
-  },
-  {
-    id: '8',
-    url: '/sotano_barro.jpg',
-    name: 'Sótano del Barro',
-    description: 'Hábitat de guacamayas verdes y aventura para exploradores.',
-    municipio: 'Arroyo Seco'
-  },
-  
-  // Landa de Matamoros
-  {
-    id: '9',
-    url: '/landa_agua.jpg',
-    name: 'Misión de Santa María del Agua de Landa de Matamoros',
-    description: 'Misión franciscana con arquitectura colonial excepcional.',
-    municipio: 'Landa de Matamoros'
-  },
-  {
-    id: '10',
-    url: '/tilaco.jpg',
-    name: 'Misión de San Francisco de Tilaco',
-    description: 'Joya arquitectónica con fachada barroca única.',
-    municipio: 'Landa de Matamoros'
-  },
-  {
-    id: '11',
-    url: '/fosiles.webp',
-    name: 'Zona de fósiles',
-    description: 'Sitio paleontológico con vestigios de vida prehistórica.',
-    municipio: 'Landa de Matamoros'
-  },
-  
-  // Pinal de Amoles
-  {
-    id: '12',
-    url: '/cuatro_palos.webp',
-    name: 'Mirador Cuatro Palos',
-    description: 'Vista épica entre montañas y nubes en Pinal de Amoles.',
-    municipio: 'Pinal de Amoles'
-  },
-  {
-    id: '13',
-    url: '/rio_escanela.webp',
-    name: 'Río Escanela y Puente de Dios',
-    description: 'Sendero con ríos, puentes colgantes y cascadas.',
-    municipio: 'Pinal de Amoles'
-  },
-  {
-    id: '14',
-    url: '/bucareli.jpeg',
-    name: 'Exconvento / Misión de Bucareli',
-    description: 'Ruinas históricas con arquitectura colonial y vistas panorámicas.',
-    municipio: 'Pinal de Amoles'
-  },
-  {
-    id: '15',
-    url: '/sanjosepinal.jpg',
-    name: 'Templo de San José',
-    description: 'Templo colonial con arte sacro y arquitectura tradicional.',
-    municipio: 'Pinal de Amoles'
-  },
-  {
-    id: '16',
-    url: '/mirador_cristal.jpeg',
-    name: 'Mirador de Cristal',
-    description: 'Plataforma de cristal con vistas espectaculares de la sierra.',
-    municipio: 'Pinal de Amoles'
-  }
-]
-
 const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito verdadero
@@ -186,7 +64,7 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onClick={() => {
-              console.log('Clicked on:', place.name)
+              console.log('Clicked on:', place.nombre)
             }}
             style={{
               minWidth: '280px',
@@ -204,8 +82,8 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
             }}
           >
             <img
-              src={place.url}
-              alt={place.name}
+              src={place.url_imagen}
+              alt={place.nombre}
               style={{
                 width: '100%',
                 height: '100%',
@@ -249,7 +127,7 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
                 fontWeight: 'bold',
                 textShadow: '2px 2px 4px rgba(0,0,0,0.7)'
               }}>
-                {place.name}
+                {place.nombre}
               </h3>
               <p style={{
                 margin: '0.3rem 0 0 0',
@@ -257,7 +135,7 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
                 opacity: '0.9',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
               }}>
-                {place.description}
+                {place.descripcion}
               </p>
             </div>
           </div>
@@ -274,50 +152,104 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [places, setPlaces] = useState([]) // Estado para los lugares
+  const [isLoading, setIsLoading] = useState(true) // Estado de carga
+
+  // Cargar lugares desde Supabase
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      try {
+        setIsLoading(true)
+        const { data, error } = await supabase
+          .from('lugares')
+          .select('id, nombre, descripcion, municipio, url_imagen, destacado')
+        
+        if (error) {
+          console.error('Error al obtener lugares:', error)
+          console.error('Detalles del error:', error.message)
+        } else {
+          console.log('Datos obtenidos:', data) // Para debug
+          setPlaces(data || [])
+        }
+      } catch (error) {
+        console.error('Error al conectar con Supabase:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPlaces()
+  }, [])
 
   // Verificar autenticación al cargar el componente
- // Asegúrate de tener esta línea al inicio
-
-useEffect(() => {
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user) {
-      setIsAuthenticated(true)
-      setUser(session.user)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setIsAuthenticated(true)
+        setUser(session.user)
+      }
     }
+
+    checkAuth()
+
+    // Suscribirse a cambios en sesión
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user)
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      listener.subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setIsAuthenticated(false)
+    setUser(null)
+    setShowUserMenu(false)
   }
 
-  checkAuth()
-
-  // Suscribirse a cambios en sesión
-  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-    setIsAuthenticated(!!session?.user)
-    setUser(session?.user ?? null)
-  })
-
-  return () => {
-    listener.subscription.unsubscribe()
-  }
-}, [])
-
-
-const handleLogout = async () => {
-  await supabase.auth.signOut()
-  setIsAuthenticated(false)
-  setUser(null)
-  setShowUserMenu(false)
-}
-
-
+  // Filtrar lugares
   const filtered = places.filter(p => {
-    const matchesSearch = `${p.name} ${p.description}`.toLowerCase().includes(search.toLowerCase())
+    const searchText = `${p.nombre || ''} ${p.descripcion || ''}`.toLowerCase()
+    const matchesSearch = searchText.includes(search.toLowerCase())
     const matchesMunicipio = selectedMunicipio === 'Todos' || p.municipio === selectedMunicipio
     return matchesSearch && matchesMunicipio
   })
 
-  // Dividir lugares para diferentes carruseles
-  const firstRowPlaces = places.slice(0, 10)
-  const secondRowPlaces = places.slice(10, 16)
+  const destacados = places.filter(p => p.destacado === true)
+  const noDestacados = places.filter(p => p.destacado === false)
+
+  const firstRowPlaces = destacados
+  const secondRowPlaces = noDestacados
+
+  // Mostrar loading mientras se cargan los lugares
+  if (isLoading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid #004e92',
+            borderTop: '4px solid transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }}></div>
+          <p style={{ color: '#004e92', fontSize: '1.2rem' }}>Cargando lugares...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -364,7 +296,7 @@ const handleLogout = async () => {
             {[
               { name: 'Inicio', href: '/' },
               { name: 'Recomendaciones', href: '/Recomendaciones' },
-              { name: 'Nosotros', href: '/osotros' },
+              { name: 'Nosotros', href: '/nosotros' },
               { name: 'Contacto', href: '/contacto' }
             ].map(item => (
               <li key={item.name}>
@@ -440,8 +372,7 @@ const handleLogout = async () => {
                   👤
                 </div>
                 <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
-                  {user?.email?.split('@')[0] || 'Usuario'}{user?.name || 'Usuario'}
-                  
+                  {user?.email?.split('@')[0] || user?.name || 'Usuario'}
                 </span>
                 <span style={{ fontSize: '0.8rem' }}>
                   {showUserMenu ? '▲' : '▼'}
@@ -478,7 +409,6 @@ const handleLogout = async () => {
                   <button
                     onClick={() => {
                       setShowUserMenu(false)
-                      // Aquí puedes agregar navegación al perfil
                       console.log('Ir al perfil')
                     }}
                     style={{
@@ -501,7 +431,6 @@ const handleLogout = async () => {
                   <button
                     onClick={() => {
                       setShowUserMenu(false)
-                      // Aquí puedes agregar navegación a favoritos
                       console.log('Ir a favoritos')
                     }}
                     style={{
@@ -555,9 +484,7 @@ const handleLogout = async () => {
         minHeight: '100vh'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div
-            style={{ textAlign: 'center', marginBottom: '2rem' }}
-          >
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <h1 style={{ 
               fontSize: '2.8rem', 
               color: '#004e92', 
@@ -643,33 +570,39 @@ const handleLogout = async () => {
           </div>
 
           {/* Carruseles infinitos mejorados */}
-          <section style={{ marginBottom: '4rem' }}>
-            <div>
-              <h2 style={{ 
-                fontSize: '2rem', 
-                color: '#004e92', 
-                margin: '0 0 1.5rem 0',
-                fontWeight: 'bold',
-                textAlign: 'center'
-              }}>
-                🏛️ Lugares Destacados
-              </h2>
-              <InfiniteCarousel places={firstRowPlaces} speed={60} />
-            </div>
-            
-            <div>
-              <h2 style={{ 
-                fontSize: '2rem', 
-                color: '#00a86b', 
-                margin: '2rem 0 1.5rem 0',
-                fontWeight: 'bold',
-                textAlign: 'center'
-              }}>
-                🌿 Naturaleza y Aventura
-              </h2>
-              <InfiniteCarousel places={secondRowPlaces} speed={50} />
-            </div>
-          </section>
+          {places.length > 0 && (
+            <section style={{ marginBottom: '4rem' }}>
+              {firstRowPlaces.length > 0 && (
+                <div>
+                  <h2 style={{ 
+                    fontSize: '2rem', 
+                    color: '#004e92', 
+                    margin: '0 0 1.5rem 0',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }}>
+                    🏛️ Lugares Destacados
+                  </h2>
+                  <InfiniteCarousel places={firstRowPlaces} speed={60} />
+                </div>
+              )}
+              
+              {secondRowPlaces.length > 0 && (
+                <div>
+                  <h2 style={{ 
+                    fontSize: '2rem', 
+                    color: '#00a86b', 
+                    margin: '2rem 0 1.5rem 0',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }}>
+                    🌿 Naturaleza y Aventura
+                  </h2>
+                  <InfiniteCarousel places={secondRowPlaces} speed={50} />
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Agrupación por municipio */}
           {municipios.filter(m => m !== 'Todos').map(muni => {
@@ -715,8 +648,8 @@ const handleLogout = async () => {
                     >
                       <div style={{ position: 'relative', overflow: 'hidden' }}>
                         <img
-                          src={place.url}
-                          alt={place.name}
+                          src={place.url_imagen}
+                          alt={place.nombre}
                           style={{
                             width: '100%',
                             height: '220px',
@@ -754,7 +687,7 @@ const handleLogout = async () => {
                           fontSize: '1.4rem',
                           fontWeight: 'bold'
                         }}>
-                          {place.name}
+                          {place.nombre}
                         </h3>
                         <p style={{
                           color: '#666',
@@ -762,7 +695,7 @@ const handleLogout = async () => {
                           fontSize: '1rem',
                           lineHeight: '1.5'
                         }}>
-                          {place.description}
+                          {place.descripcion}
                         </p>
                       </div>
                     </div>
@@ -771,6 +704,37 @@ const handleLogout = async () => {
               </section>
             )
           })}
+
+          {/* Mensaje cuando no hay lugares */}
+          {places.length === 0 && !isLoading && (
+            <div style={{
+              textAlign: 'center',
+              padding: '4rem 2rem',
+              color: '#666'
+            }}>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+                No se encontraron lugares
+              </h3>
+              <p>Verifica tu conexión a Supabase o contacta al administrador.</p>
+              <p style={{ fontSize: '0.9rem', marginTop: '1rem', color: '#999' }}>
+                Revisa la consola del navegador para más detalles del error.
+              </p>
+            </div>
+          )}
+
+          {/* Mensaje cuando hay lugares pero no coinciden con el filtro */}
+          {places.length > 0 && filtered.length === 0 && !isLoading && (
+            <div style={{
+              textAlign: 'center',
+              padding: '4rem 2rem',
+              color: '#666'
+            }}>
+              <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+                No se encontraron lugares que coincidan con tu búsqueda
+              </h3>
+              <p>Intenta con otros términos de búsqueda o selecciona "Todos" los municipios.</p>
+            </div>
+          )}
         </div>
       </main>
 
@@ -796,6 +760,14 @@ const handleLogout = async () => {
           Vive la cultura, descubre la sierra
         </p>
       </footer>
+
+      {/* CSS para la animación de loading */}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
