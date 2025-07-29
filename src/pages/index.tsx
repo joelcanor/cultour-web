@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabaseClient'
 const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito verdadero
-const InfiniteCarousel = ({ places, speed = 30 }) => {
+const InfiniteCarousel = ({ places, speed = 30, favoritos, toggleFavorito, user }) => {
+  const router = useRouter()
   const [isHovered, setIsHovered] = useState(false)
   const [currentX, setCurrentX] = useState(0)
   const carouselRef = useRef(null)
@@ -63,9 +64,7 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
             key={`${place.id}-${index}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            onClick={() => {
-              console.log('Clicked on:', place.nombre)
-            }}
+            onClick={() => router.push(`/lugares/${place.id}`)}
             style={{
               minWidth: '280px',
               height: '200px',
@@ -108,6 +107,36 @@ const InfiniteCarousel = ({ places, speed = 30 }) => {
               padding: '2rem 1rem 1rem',
               color: 'white'
             }}>
+              {/* Botón de favorito */}
+              <div
+                onClick={(e) => toggleFavorito(place.id, e)}
+                style={{
+                  position: 'absolute',
+                  top: '-3rem',
+                  left: '1rem',
+                  fontSize: '1.8rem',
+                  cursor: 'pointer',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                  transition: 'all 0.3s ease',
+                  transform: 'scale(1)',
+                  zIndex: 20
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.2)'
+                  e.currentTarget.style.filter = 'brightness(1.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                  e.currentTarget.style.filter = 'brightness(1)'
+                }}
+              >
+                {favoritos.includes(place.id) ? (
+                  <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
+                ) : (
+                  <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
+                )}
+              </div>
+              
               <div style={{
                 position: 'absolute',
                 top: '0.5rem',
@@ -154,6 +183,92 @@ export default function Home() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [places, setPlaces] = useState([]) // Estado para los lugares
   const [isLoading, setIsLoading] = useState(true) // Estado de carga
+  const [favoritos, setFavoritos] = useState([]) // Estado para favoritos
+
+  // Cargar favoritos del usuario
+  useEffect(() => {
+    const fetchFavoritos = async () => {
+      if (!user) {
+        setFavoritos([])
+        return
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('favoritos')
+          .select('lugar_id')
+          .eq('usuario_id', user.id)
+        
+        if (error) {
+          console.error('Error al obtener favoritos:', error)
+        } else {
+          setFavoritos(data ? data.map(f => f.lugar_id) : [])
+        }
+      } catch (error) {
+        console.error('Error al conectar con favoritos:', error)
+      }
+    }
+
+    fetchFavoritos()
+  }, [user])
+
+  // Función para agregar/quitar favoritos
+  const toggleFavorito = async (lugarId, e) => {
+    if (e) {
+      e.stopPropagation() // Evitar que dispare el click de la tarjeta
+    }
+    
+    if (!user) {
+      // Si no está autenticado, redirigir al login
+      router.push('/auth/login')
+      return
+    }
+
+    const yaEsta = favoritos.includes(lugarId)
+    
+    try {
+      if (yaEsta) {
+        // Quitar de favoritos
+        const { error } = await supabase
+          .from('favoritos')
+          .delete()
+          .eq('usuario_id', user.id)
+          .eq('lugar_id', lugarId)
+        
+        if (error) {
+          console.error('Error al quitar favorito:', error)
+          return
+        }
+      } else {
+        // Agregar a favoritos
+        const { error } = await supabase
+          .from('favoritos')
+          .insert({ 
+            usuario_id: user.id, 
+            lugar_id: lugarId 
+          })
+        
+        if (error) {
+          console.error('Error al agregar favorito:', error)
+          return
+        }
+      }
+
+      // Actualizar lista local
+      const { data, error } = await supabase
+        .from('favoritos')
+        .select('lugar_id')
+        .eq('usuario_id', user.id)
+      
+      if (error) {
+        console.error('Error al actualizar favoritos:', error)
+      } else {
+        setFavoritos(data ? data.map(f => f.lugar_id) : [])
+      }
+    } catch (error) {
+      console.error('Error en toggleFavorito:', error)
+    }
+  }
 
   // Cargar lugares desde Supabase
   useEffect(() => {
@@ -583,7 +698,7 @@ export default function Home() {
                   }}>
                     🏛️ Lugares Destacados
                   </h2>
-                  <InfiniteCarousel places={firstRowPlaces} speed={60} />
+                  <InfiniteCarousel places={firstRowPlaces} speed={60} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} />
                 </div>
               )}
               
@@ -598,7 +713,7 @@ export default function Home() {
                   }}>
                     🌿 Naturaleza y Aventura
                   </h2>
-                  <InfiniteCarousel places={secondRowPlaces} speed={50} />
+                  <InfiniteCarousel places={secondRowPlaces} speed={50} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} />
                 </div>
               )}
             </section>
@@ -631,6 +746,7 @@ export default function Home() {
                   {lugaresMunicipio.map(place => (
                     <div
                       key={place.id}
+                      onClick={() => router.push(`/lugares/${place.id}`)}
                       style={{
                         background: '#fff',
                         borderRadius: '1.5rem',
@@ -647,6 +763,44 @@ export default function Home() {
                       }}
                     >
                       <div style={{ position: 'relative', overflow: 'hidden' }}>
+                        {/* Botón de favorito */}
+                        <div
+                          onClick={(e) => toggleFavorito(place.id, e)}
+                          style={{
+                            position: 'absolute',
+                            top: '1rem',
+                            left: '1rem',
+                            fontSize: '2rem',
+                            cursor: 'pointer',
+                            textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                            transition: 'all 0.3s ease',
+                            transform: 'scale(1)',
+                            zIndex: 20,
+                            background: 'rgba(255,255,255,0.2)',
+                            borderRadius: '50%',
+                            width: '45px',
+                            height: '45px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backdropFilter: 'blur(10px)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.15)'
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+                          }}
+                        >
+                          {favoritos.includes(place.id) ? (
+                            <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
+                          ) : (
+                            <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
+                          )}
+                        </div>
+                        
                         <img
                           src={place.url_imagen}
                           alt={place.nombre}
