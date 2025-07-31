@@ -892,6 +892,29 @@ export default function Home() {
             </select>
           </div>
 
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+  <button
+    onClick={() => router.push('/recomendaciones')}
+    style={{
+      background: 'linear-gradient(135deg, #004e92, #00a86b)',
+      color: 'white',
+      padding: '0.8rem 1.5rem',
+      fontSize: '1rem',
+      borderRadius: '2rem',
+      border: 'none',
+      fontWeight: 'bold',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease'
+    }}
+    onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+  >
+    🤖 Ver Recomendaciones IA
+  </button>
+</div>
+
+
           {/* Carruseles infinitos mejorados */}
           {places.length > 0 && (
             <section style={{ marginBottom: '4rem' }}>

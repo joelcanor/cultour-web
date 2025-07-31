@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout'
 
+
 export default function Nosotros(props) {
   return (
     <Layout {...props}>
