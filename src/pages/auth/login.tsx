@@ -35,17 +35,40 @@ export default function LoginPage() {
   setError('')
   setShowResendEmail(false)
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    setError(error.message)
+if (error) {
+  setError(error.message)
 
-    if (error.message.toLowerCase().includes('confirm')) {
-      setShowResendEmail(true)
+  if (error.message.toLowerCase().includes('confirm')) {
+    setShowResendEmail(true)
+  }
+} else {
+  const session = signInData.session
+  const user = session?.user
+
+  if (user) {
+    const { data: perfil, error: perfilError } = await supabase
+      .from('perfil_usuario')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    if (perfilError) {
+      console.error('Error obteniendo rol:', perfilError.message)
+      router.push('/')
+    } else {
+      if (perfil?.rol === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
     }
   } else {
     router.push('/')
   }
+}
+
 
   setIsLoading(false)
 }

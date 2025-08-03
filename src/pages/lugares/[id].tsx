@@ -31,12 +31,21 @@ export default function LugarDetalle() {
       }
 
       const fetchComentarios = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('comentarios')
-          .select('*')
+         .select(`
+  *,
+  perfil_usuario:perfil_usuario!fk_usuario_perfil (
+    nombre,
+    foto_url
+  )
+`)
+
           .eq('lugar_id', id)
           .order('fecha', { ascending: false })
-        setComentarios(data)
+
+        if (error) console.error("Error al obtener comentarios:", error)
+        setComentarios(data || [])
       }
 
       fetchLugar()
@@ -55,10 +64,16 @@ export default function LugarDetalle() {
       setNuevoComentario('')
       const { data: nuevos } = await supabase
         .from('comentarios')
-        .select('*')
+        .select(`
+          *,
+          perfil_usuario (
+            nombre,
+            foto_url
+          )
+        `)
         .eq('lugar_id', id)
         .order('fecha', { ascending: false })
-      setComentarios(nuevos)
+      setComentarios(nuevos || [])
     }
   }
 
@@ -71,7 +86,6 @@ export default function LugarDetalle() {
       <p style={{ marginTop: '1rem' }}>{lugar.descripcion}</p>
       <p><strong>Municipio:</strong> {lugar.municipio}</p>
 
-      {/* Botón para Google Maps */}
       {lugar.latitud && lugar.longitud && (
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${lugar.latitud},${lugar.longitud}`}
@@ -91,21 +105,42 @@ export default function LugarDetalle() {
         </a>
       )}
 
-      {/* Sección de Comentarios */}
       <div style={{ marginTop: '3rem' }}>
         <h3 style={{ color: '#004e92' }}>💬 Comentarios</h3>
+
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {comentarios.map(c => (
             <li key={c.id} style={{
-              background: '#f0f0f0',
+              background: '#f9f9f9',
               borderRadius: '1rem',
-              padding: '0.8rem 1rem',
-              marginBottom: '1rem'
+              padding: '1rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
             }}>
-              <p style={{ margin: 0 }}>{c.comentario}</p>
-              <span style={{ fontSize: '0.75rem', color: '#666' }}>
-                {new Date(c.fecha).toLocaleString()}
-              </span>
+              <img
+                src={c.perfil_usuario?.foto_url || '/default-avatar.png'}
+                alt="avatar"
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid #00a86b'
+                }}
+              />
+              <div>
+                <p style={{ margin: 0, fontWeight: 'bold' }}>
+                  {c.perfil_usuario?.nombre?.trim()
+                    ? c.perfil_usuario.nombre
+                    : c.usuario_id?.substring(0, 8) || 'Usuario'}
+                </p>
+                <p style={{ margin: '0.3rem 0' }}>{c.comentario}</p>
+                <span style={{ fontSize: '0.75rem', color: '#666' }}>
+                  {new Date(c.fecha).toLocaleString()}
+                </span>
+              </div>
             </li>
           ))}
         </ul>
