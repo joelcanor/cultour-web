@@ -17,52 +17,6 @@ export default function Contacto(props) {
     })
   }
 
-
-
-  const showManualCopyInstructions = (textToCopy) => {
-    // Crear un modal o ventana con el texto para copiar manualmente
-    const modal = document.createElement('div')
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 10000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      box-sizing: border-box;
-    `
-    
-    const content = document.createElement('div')
-    content.style.cssText = `
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      max-width: 600px;
-      width: 100%;
-      max-height: 80vh;
-      overflow-y: auto;
-    `
-    
-    content.innerHTML = `
-      <h3 style="color: #004e92; margin-bottom: 15px;">📧 Copia este mensaje para tu email</h3>
-      <p style="margin-bottom: 15px; color: #666;">Copia el siguiente texto y envíalo a <strong>cultourweb@gmail.com</strong></p>
-      <textarea readonly style="width: 100%; height: 200px; padding: 10px; border: 2px solid #004e92; border-radius: 5px; font-family: monospace; margin-bottom: 15px; box-sizing: border-box;">${textToCopy}</textarea>
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button onclick="this.previousElementSibling.select(); document.execCommand('copy'); alert('¡Copiado!')" style="background: #004e92; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">📋 Copiar Texto</button>
-        <a href="https://mail.google.com" target="_blank" style="background: #00a86b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">📧 Abrir Gmail</a>
-        <button onclick="document.body.removeChild(this.closest('div').parentElement)" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">✖️ Cerrar</button>
-      </div>
-    `
-    
-    modal.appendChild(content)
-    document.body.appendChild(modal)
-  }
-
   const handleWhatsAppSubmit = (e) => {
     e.preventDefault()
     
