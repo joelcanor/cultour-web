@@ -6,11 +6,17 @@ export default function AdminDashboard() {
   const [usuarios, setUsuarios] = useState([])
   const [lugares, setLugares] = useState([])
   const [adminInfo, setAdminInfo] = useState(null)
+  const handleLogout = async () => {
+  await supabase.auth.signOut()
+  router.push('/') // o a "/login" si prefieres
+}
+  const [visitasTotales, setVisitasTotales] = useState(0)
   const [stats, setStats] = useState({
     totalUsuarios: 0,
     totalLugares: 0,
     usuariosActivos: 0,
-    lugaresDestacados: 0
+    lugaresDestacados: 0,
+    visitasTotales: 0
   })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -30,15 +36,21 @@ export default function AdminDashboard() {
           setAdminInfo(adminData)
         }
 
-        // Obtener usuarios
-        const { data: usuariosData, error: usuariosError } = await supabase
-          .from('perfil_usuario')
-          .select('*')
+        // Obtener usuarios usando la función RPC (igual que en el otro componente)
+        const { data: usuariosData, error: usuariosError } = await supabase.rpc('obtener_todos_los_usuarios')
         
         if (usuariosError) {
           console.error('Error al obtener usuarios:', usuariosError)
         } else {
-          setUsuarios(usuariosData || [])
+          // Normalizar datos igual que en UsuariosAdmin
+          const usuariosNormalizados = (usuariosData || []).map(u => ({
+            ...u,
+            rol: u.rol || 'usuario',
+            nombre: u.nombre || '',
+            telefono: u.telefono || '',
+            foto_url: u.avatar_url || u.foto_url || '',
+          }))
+          setUsuarios(usuariosNormalizados)
         }
 
         // Obtener lugares
@@ -52,13 +64,32 @@ export default function AdminDashboard() {
           setLugares(lugaresData || [])
         }
 
+        // Obtener visitas totales del sitio
+        const { data: visitasData, error: visitasError } = await supabase
+          .from('contador_visitas')
+          .select('total_visitas')
+          .eq('id', 1)
+          .single()
+
+        if (visitasError) {
+          console.error('Error al obtener visitas:', visitasError)
+        } else {
+          setVisitasTotales(visitasData?.total_visitas || 0)
+        }
+
         // Calcular estadísticas
         if (usuariosData && lugaresData) {
+          const usuariosNormalizados = (usuariosData || []).map(u => ({
+            ...u,
+            rol: u.rol || 'usuario'
+          }))
+
           setStats({
-            totalUsuarios: usuariosData.length,
+            totalUsuarios: usuariosNormalizados.length,
             totalLugares: lugaresData.length,
-            usuariosActivos: usuariosData.filter(u => u.rol === 'usuario').length,
-            lugaresDestacados: lugaresData.filter(l => l.destacado === true).length
+            usuariosActivos: usuariosNormalizados.filter(u => u.rol === 'usuario').length,
+            lugaresDestacados: lugaresData.filter(l => l.destacado === true).length,
+            visitasTotales: visitasData?.total_visitas || 0
           })
         }
 
@@ -177,7 +208,14 @@ export default function AdminDashboard() {
                 🏠 Ir al Sitio Web
               </a>
             </li>
+            <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+  <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
+    🔒 Cerrar Sesión
+  </button>
+</li>
+
           </ul>
+
         </nav>
       </aside>
 
@@ -244,7 +282,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Cards de estadísticas */}
+        {/* Cards de estadísticas - AHORA CON VISITAS TOTALES */}
         <div style={statsGridStyle}>
           <div style={{...statsCardStyle, borderLeft: '4px solid #004e92'}}>
             <div style={statsIconStyle}>👥</div>
@@ -262,19 +300,19 @@ export default function AdminDashboard() {
             </div>
           </div>
           
+          <div style={{...statsCardStyle, borderLeft: '4px solid #ff6b35'}}>
+            <div style={{...statsIconStyle, backgroundColor: '#fff4f0', color: '#ff6b35'}}>👁️</div>
+            <div>
+              <h3 style={statsNumberStyle}>{stats.visitasTotales.toLocaleString()}</h3>
+              <p style={statsLabelStyle}>Visitas Totales</p>
+            </div>
+          </div>
+          
           <div style={{...statsCardStyle, borderLeft: '4px solid #ffa726'}}>
             <div style={{...statsIconStyle, backgroundColor: '#fff8e1', color: '#ffa726'}}>⭐</div>
             <div>
               <h3 style={statsNumberStyle}>{stats.lugaresDestacados}</h3>
               <p style={statsLabelStyle}>Lugares Destacados</p>
-            </div>
-          </div>
-          
-          <div style={{...statsCardStyle, borderLeft: '4px solid #28a745'}}>
-            <div style={{...statsIconStyle, backgroundColor: '#e8f5e8', color: '#28a745'}}>✅</div>
-            <div>
-              <h3 style={statsNumberStyle}>{stats.usuariosActivos}</h3>
-              <p style={statsLabelStyle}>Usuarios Activos</p>
             </div>
           </div>
         </div>
@@ -317,21 +355,45 @@ export default function AdminDashboard() {
                 Visitar la página principal como usuario
               </p>
             </button>
+
+            <button 
+              onClick={() => window.open('/admin/usuarios', '_blank')}
+              style={actionButtonStyle}
+            >
+              <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>➕</span>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#9c27b0' }}>Crear Usuario</h3>
+              <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>
+                Registrar nuevos usuarios al sistema
+              </p>
+            </button>
           </div>
         </div>
 
-        {/* Resumen de usuarios recientes */}
+        {/* Resumen de usuarios recientes - MEJORADO */}
         <div style={recentUsersStyle}>
-          <h2 style={{ color: '#004e92', marginBottom: '1.5rem', fontSize: '1.5rem' }}>
-            Usuarios Recientes
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ color: '#004e92', margin: 0, fontSize: '1.5rem' }}>
+              Usuarios Recientes
+            </h2>
+            <span style={{ 
+              background: '#e3f2fd', 
+              color: '#1976d2', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '1rem',
+              fontSize: '0.9rem',
+              fontWeight: '500'
+            }}>
+              Total: {usuarios.length}
+            </span>
+          </div>
           <div style={usersTableStyle}>
             <div style={usersHeaderStyle}>
               <span style={{ fontWeight: 'bold', color: '#004e92' }}>Usuario</span>
               <span style={{ fontWeight: 'bold', color: '#004e92' }}>Rol</span>
+              <span style={{ fontWeight: 'bold', color: '#004e92' }}>Fecha</span>
               <span style={{ fontWeight: 'bold', color: '#004e92' }}>Acciones</span>
             </div>
-            {usuarios.slice(0, 5).map((usuario) => (
+            {usuarios.slice(0, 6).map((usuario) => (
               <div key={usuario.id} style={userRowStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                   <img 
@@ -344,6 +406,9 @@ export default function AdminDashboard() {
                       objectFit: 'cover',
                       border: '2px solid #e0e0e0'
                     }} 
+                    onError={(e) => {
+                      e.target.src = '/logo.jpg'
+                    }}
                   />
                   <div>
                     <div style={{ fontWeight: '500', color: '#333' }}>
@@ -359,23 +424,39 @@ export default function AdminDashboard() {
                   borderRadius: '1rem',
                   fontSize: '0.8rem',
                   fontWeight: '500',
-                  backgroundColor: usuario.rol === 'admin' ? '#e3f2fd' : '#e8f5e8',
-                  color: usuario.rol === 'admin' ? '#1976d2' : '#388e3c'
+                  backgroundColor: usuario.rol === 'admin' ? '#fff3e0' : '#e8f5e8',
+                  color: usuario.rol === 'admin' ? '#f57c00' : '#2e7d32'
                 }}>
-                  {usuario.rol}
+                  {usuario.rol === 'admin' ? '👑 Admin' : '👤 Usuario'}
                 </span>
-                <button
-                  onClick={() => cambiarRol(usuario.id, usuario.rol === 'admin' ? 'usuario' : 'admin')}
-                  style={{
-                    ...miniButtonStyle,
-                    backgroundColor: usuario.rol === 'admin' ? '#ff5722' : '#4caf50',
-                  }}
-                >
-                  {usuario.rol === 'admin' ? 'Quitar Admin' : 'Hacer Admin'}
-                </button>
+                <span style={{ fontSize: '0.8rem', color: '#666' }}>
+                  {usuario.fecha_registro
+                    ? new Date(usuario.fecha_registro).toLocaleDateString('es-MX')
+                    : 'N/A'}
+                </span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => cambiarRol(usuario.id, usuario.rol === 'admin' ? 'usuario' : 'admin')}
+                    style={{
+                      ...miniButtonStyle,
+                      backgroundColor: usuario.rol === 'admin' ? '#ff5722' : '#4caf50',
+                    }}
+                  >
+                    {usuario.rol === 'admin' ? '⬇️' : '⬆️'}
+                  </button>
+                  <button
+                    onClick={() => router.push(`/perfil/${usuario.id}`)}
+                    style={{
+                      ...miniButtonStyle,
+                      backgroundColor: '#2196f3',
+                    }}
+                  >
+                    👁️
+                  </button>
+                </div>
               </div>
             ))}
-            {usuarios.length > 5 && (
+            {usuarios.length > 6 && (
               <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <button
                   onClick={() => router.push('/admin/usuarios')}
@@ -399,7 +480,7 @@ export default function AdminDashboard() {
   )
 }
 
-// Estilos
+// Estilos actualizados
 const sidebarStyle = {
   width: '280px',
   background: 'linear-gradient(180deg, #004e92 0%, #003d75 100%)',
@@ -526,7 +607,7 @@ const usersTableStyle = {
 
 const usersHeaderStyle = {
   display: 'grid',
-  gridTemplateColumns: '1fr auto auto',
+  gridTemplateColumns: '1fr auto auto auto',
   gap: '1rem',
   padding: '1rem',
   borderBottom: '2px solid #e0e0e0',
@@ -535,7 +616,7 @@ const usersHeaderStyle = {
 
 const userRowStyle = {
   display: 'grid',
-  gridTemplateColumns: '1fr auto auto',
+  gridTemplateColumns: '1fr auto auto auto',
   gap: '1rem',
   padding: '1rem',
   borderRadius: '0.8rem',
@@ -544,8 +625,8 @@ const userRowStyle = {
 }
 
 const miniButtonStyle = {
-  padding: '0.4rem 0.8rem',
-  borderRadius: '0.5rem',
+  padding: '0.3rem 0.6rem',
+  borderRadius: '0.4rem',
   border: 'none',
   color: 'white',
   fontSize: '0.8rem',

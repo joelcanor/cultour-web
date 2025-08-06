@@ -9,13 +9,30 @@ export default function UsuariosAdmin() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRol, setFilterRol] = useState('Todos')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [creatingUser, setCreatingUser] = useState(false)
   const [stats, setStats] = useState({
     total: 0,
     admins: 0,
     usuarios: 0,
     recientes: 0
   })
+  
+  // Estado para el formulario de creación
+  const [newUser, setNewUser] = useState({
+    email: '',
+    password: '',
+    nombre: '',
+    telefono: '',
+    rol: 'usuario'
+  })
+
   const router = useRouter()
+
+  const handleLogout = async () => {
+  await supabase.auth.signOut()
+  router.push('/') // o '/login', como prefieras
+}
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,8 +54,8 @@ export default function UsuariosAdmin() {
         // Obtener usuarios usando función RPC
         const { data, error } = await supabase.rpc('obtener_todos_los_usuarios')
         
-        console.log('Datos recibidos de RPC:', data)  // Para debug
-        console.log('Error (si hay):', error)  // Para debug
+        console.log('Datos recibidos de RPC:', data)
+        console.log('Error (si hay):', error)
 
         if (error) {
           console.error('Error al obtener usuarios:', error)
@@ -49,7 +66,7 @@ export default function UsuariosAdmin() {
             rol: u.rol || 'usuario',
             nombre: u.nombre || '',
             telefono: u.telefono || '',
-            foto_url: u.avatar_url || u.foto_url || '', // Importante para la imagen
+            foto_url: u.avatar_url || u.foto_url || '',
           }))
           
           setUsuarios(usuariosNormalizados)
@@ -59,7 +76,7 @@ export default function UsuariosAdmin() {
           const total = usuariosNormalizados.length
           const admins = usuariosNormalizados.filter(u => u.rol === 'admin').length
           const usuariosCount = usuariosNormalizados.filter(u => u.rol === 'usuario').length
-          const recientes = Math.floor(total * 0.3) // Aproximación
+          const recientes = Math.floor(total * 0.3)
           
           setStats({ total, admins, usuarios: usuariosCount, recientes })
         }
@@ -77,7 +94,6 @@ export default function UsuariosAdmin() {
   useEffect(() => {
     let filtered = usuarios
 
-    // Filtro por término de búsqueda
     if (searchTerm) {
       filtered = filtered.filter(usuario => 
         usuario.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,13 +102,98 @@ export default function UsuariosAdmin() {
       )
     }
 
-    // Filtro por rol
     if (filterRol !== 'Todos') {
       filtered = filtered.filter(usuario => usuario.rol === filterRol)
     }
 
     setFilteredUsuarios(filtered)
   }, [searchTerm, filterRol, usuarios])
+
+  // Función para crear nuevo usuario
+  const crearUsuario = async (e) => {
+    e.preventDefault()
+    
+    if (!newUser.email || !newUser.password) {
+      alert('Email y contraseña son obligatorios')
+      return
+    }
+
+    setCreatingUser(true)
+
+    try {
+      // 1. Crear usuario en Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: {
+            nombre: newUser.nombre,
+            telefono: newUser.telefono
+          }
+        }
+      })
+
+      if (authError) {
+        throw authError
+      }
+
+      if (authData.user) {
+        // 2. Crear perfil de usuario
+        const { error: profileError } = await supabase
+          .from('perfil_usuario')
+          .insert([{
+            id: authData.user.id,
+            email: newUser.email,
+            nombre: newUser.nombre,
+            telefono: newUser.telefono,
+            rol: newUser.rol,
+            fecha_registro: new Date().toISOString()
+          }])
+
+        if (profileError) {
+          throw profileError
+        }
+
+        // 3. Actualizar lista local
+        const nuevoUsuario = {
+          id: authData.user.id,
+          email: newUser.email,
+          nombre: newUser.nombre,
+          telefono: newUser.telefono,
+          rol: newUser.rol,
+          fecha_registro: new Date().toISOString(),
+          foto_url: ''
+        }
+
+        setUsuarios(prev => [...prev, nuevoUsuario])
+        
+        // Actualizar estadísticas
+        setStats(prev => ({
+          total: prev.total + 1,
+          admins: newUser.rol === 'admin' ? prev.admins + 1 : prev.admins,
+          usuarios: newUser.rol === 'usuario' ? prev.usuarios + 1 : prev.usuarios,
+          recientes: prev.recientes + 1
+        }))
+
+        // Limpiar formulario y cerrar modal
+        setNewUser({
+          email: '',
+          password: '',
+          nombre: '',
+          telefono: '',
+          rol: 'usuario'
+        })
+        setShowCreateModal(false)
+        
+        alert('Usuario creado exitosamente')
+      }
+    } catch (error) {
+      console.error('Error al crear usuario:', error)
+      alert('Error al crear usuario: ' + error.message)
+    } finally {
+      setCreatingUser(false)
+    }
+  }
 
   const cambiarRol = async (id, nuevoRol) => {
     const { error } = await supabase
@@ -107,7 +208,6 @@ export default function UsuariosAdmin() {
         prev.map(u => u.id === id ? { ...u, rol: nuevoRol } : u)
       )
       
-      // Actualizar stats
       const nuevosUsuarios = usuarios.map(u => u.id === id ? { ...u, rol: nuevoRol } : u)
       setStats(prev => ({
         ...prev,
@@ -224,7 +324,13 @@ export default function UsuariosAdmin() {
                 🏠 Ir al Sitio Web
               </a>
             </li>
+                        <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+  <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
+    🔒 Cerrar Sesión
+  </button>
+</li>
           </ul>
+          
         </nav>
       </aside>
 
@@ -294,35 +400,45 @@ export default function UsuariosAdmin() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters and Create Button */}
         <div style={filtersStyle}>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="Buscar por nombre, email o ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={searchInputStyle}
-            />
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email o ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={searchInputStyle}
+              />
+              
+              <select
+                value={filterRol}
+                onChange={(e) => setFilterRol(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="Todos">Todos los roles</option>
+                <option value="admin">Solo administradores</option>
+                <option value="usuario">Solo usuarios regulares</option>
+              </select>
+              
+              <button
+                onClick={() => {
+                  setSearchTerm('')
+                  setFilterRol('Todos')
+                }}
+                style={clearButtonStyle}
+              >
+                Limpiar filtros
+              </button>
+            </div>
             
-            <select
-              value={filterRol}
-              onChange={(e) => setFilterRol(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="Todos">Todos los roles</option>
-              <option value="admin">Solo administradores</option>
-              <option value="usuario">Solo usuarios regulares</option>
-            </select>
-            
+            {/* Botón para crear usuario */}
             <button
-              onClick={() => {
-                setSearchTerm('')
-                setFilterRol('Todos')
-              }}
-              style={clearButtonStyle}
+              onClick={() => setShowCreateModal(true)}
+              style={createButtonStyle}
             >
-              Limpiar filtros
+              ➕ Crear Usuario
             </button>
           </div>
           
@@ -331,7 +447,7 @@ export default function UsuariosAdmin() {
           </div>
         </div>
 
-        {/* AQUÍ ESTÁ LA TABLA SIMPLE QUE SUGIERE TU AMIGO */}
+        {/* Tabla de usuarios */}
         <div style={{ padding: '2rem', background: 'white', borderRadius: '1rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
           {filteredUsuarios.length === 0 ? (
             <div style={emptyStateStyle}>
@@ -357,11 +473,11 @@ export default function UsuariosAdmin() {
                   <tr key={user.id} style={trStyle}>
                     <td style={td}>
                       <img
-                        src={user.foto_url || '/logo.png'}
+                        src={user.foto_url || '/logo.jpg'}
                         alt="avatar"
                         style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
                         onError={(e) => {
-                          e.target.src = '/logo.png'
+                          e.target.src = '/logo.jpg'
                         }}
                       />
                     </td>
@@ -393,6 +509,7 @@ export default function UsuariosAdmin() {
                             ...smallButtonStyle,
                             backgroundColor: user.rol === 'admin' ? '#ff5722' : '#4caf50',
                           }}
+                          title={user.rol === 'admin' ? 'Degradar a usuario' : 'Promover a admin'}
                         >
                           {user.rol === 'admin' ? '⬇️' : '⬆️'}
                         </button>
@@ -403,6 +520,7 @@ export default function UsuariosAdmin() {
                             ...smallButtonStyle,
                             backgroundColor: '#2196f3',
                           }}
+                          title="Ver perfil"
                         >
                           👁️
                         </button>
@@ -413,6 +531,7 @@ export default function UsuariosAdmin() {
                             ...smallButtonStyle,
                             backgroundColor: '#f44336',
                           }}
+                          title="Eliminar usuario"
                         >
                           🗑️
                         </button>
@@ -425,6 +544,102 @@ export default function UsuariosAdmin() {
           )}
         </div>
       </main>
+
+      {/* Modal para crear usuario */}
+      {showCreateModal && (
+        <div style={modalOverlayStyle} onClick={() => setShowCreateModal(false)}>
+          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ margin: 0, color: '#333' }}>➕ Crear Nuevo Usuario</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                style={closeButtonStyle}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={crearUsuario} style={{ padding: '1.5rem' }}>
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Email *</label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  style={inputStyle}
+                  required
+                  placeholder="usuario@ejemplo.com"
+                />
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Contraseña *</label>
+                <input
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                  style={inputStyle}
+                  required
+                  placeholder="Mínimo 6 caracteres"
+                  minLength="6"
+                />
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Nombre</label>
+                <input
+                  type="text"
+                  value={newUser.nombre}
+                  onChange={(e) => setNewUser({...newUser, nombre: e.target.value})}
+                  style={inputStyle}
+                  placeholder="Nombre completo"
+                />
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Teléfono</label>
+                <input
+                  type="tel"
+                  value={newUser.telefono}
+                  onChange={(e) => setNewUser({...newUser, telefono: e.target.value})}
+                  style={inputStyle}
+                  placeholder="+52 55 1234 5678"
+                />
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Rol</label>
+                <select
+                  value={newUser.rol}
+                  onChange={(e) => setNewUser({...newUser, rol: e.target.value})}
+                  style={inputStyle}
+                >
+                  <option value="usuario">👤 Usuario Regular</option>
+                  <option value="admin">👑 Administrador</option>
+                </select>
+              </div>
+
+              <div style={modalActionsStyle}>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  style={cancelButtonStyle}
+                  disabled={creatingUser}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={submitButtonStyle}
+                  disabled={creatingUser}
+                >
+                  {creatingUser ? 'Creando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes spin {
@@ -556,13 +771,25 @@ const clearButtonStyle = {
   transition: 'all 0.3s ease'
 }
 
+const createButtonStyle = {
+  padding: '0.8rem 1.5rem',
+  borderRadius: '0.8rem',
+  border: 'none',
+  background: 'linear-gradient(135deg, #00a86b, #004e92)',
+  color: 'white',
+  cursor: 'pointer',
+  fontSize: '1rem',
+  fontWeight: '600',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 15px rgba(0,168,107,0.3)'
+}
+
 const emptyStateStyle = {
   textAlign: 'center',
   padding: '4rem 2rem',
   color: '#666'
 }
 
-// Estilos para la tabla (sugerencia de tu amigo)
 const th = {
   borderBottom: '2px solid #ccc',
   padding: '0.8rem',
@@ -594,4 +821,103 @@ const smallButtonStyle = {
   cursor: 'pointer',
   transition: 'all 0.3s ease',
   minWidth: '30px'
+}
+
+// Nuevos estilos para el modal
+const modalOverlayStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+  backdropFilter: 'blur(4px)'
+}
+
+const modalStyle = {
+  background: 'white',
+  borderRadius: '1rem',
+  maxWidth: '500px',
+  width: '90%',
+  maxHeight: '90vh',
+  overflow: 'auto',
+  boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
+}
+
+const modalHeaderStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '1.5rem',
+  borderBottom: '1px solid #eee',
+  background: 'linear-gradient(135deg, #004e92, #00a86b)',
+  borderRadius: '1rem 1rem 0 0'
+}
+
+const closeButtonStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'white',
+  fontSize: '1.5rem',
+  cursor: 'pointer',
+  padding: '0.5rem',
+  borderRadius: '50%',
+  transition: 'background-color 0.3s ease'
+}
+
+const formGroupStyle = {
+  marginBottom: '1.5rem'
+}
+
+const labelStyle = {
+  display: 'block',
+  marginBottom: '0.5rem',
+  fontSize: '0.9rem',
+  fontWeight: '600',
+  color: '#333'
+}
+
+const inputStyle = {
+  width: '100%',
+  padding: '0.8rem 1rem',
+  borderRadius: '0.8rem',
+  border: '2px solid #e0e0e0',
+  fontSize: '1rem',
+  transition: 'border-color 0.3s ease',
+  boxSizing: 'border-box'
+}
+
+const modalActionsStyle = {
+  display: 'flex',
+  gap: '1rem',
+  justifyContent: 'flex-end',
+  marginTop: '2rem'
+}
+
+const cancelButtonStyle = {
+  padding: '0.8rem 1.5rem',
+  borderRadius: '0.8rem',
+  border: '2px solid #ddd',
+  background: 'white',
+  color: '#666',
+  cursor: 'pointer',
+  fontSize: '1rem',
+  transition: 'all 0.3s ease'
+}
+
+const submitButtonStyle = {
+  padding: '0.8rem 1.5rem',
+  borderRadius: '0.8rem',
+  border: 'none',
+  background: 'linear-gradient(135deg, #00a86b, #004e92)',
+  color: 'white',
+  cursor: 'pointer',
+  fontSize: '1rem',
+  fontWeight: '600',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 15px rgba(0,168,107,0.3)'
 }

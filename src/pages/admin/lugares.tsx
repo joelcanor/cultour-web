@@ -10,12 +10,18 @@ export default function LugaresAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMunicipio, setFilterMunicipio] = useState('Todos')
   const [filterDestacado, setFilterDestacado] = useState('Todos')
+  
   const [stats, setStats] = useState({
     total: 0,
     destacados: 0,
     porMunicipio: {}
   })
   const router = useRouter()
+
+  const handleLogout = async () => {
+  await supabase.auth.signOut()
+  router.push('/') // o '/login', como prefieras
+}
 
   const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
@@ -199,7 +205,14 @@ export default function LugaresAdmin() {
                 🏠 Ir al Sitio Web
               </a>
             </li>
+             
+             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+  <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
+    🔒 Cerrar Sesión
+  </button>
+</li>
           </ul>
+  
         </nav>
       </aside>
 

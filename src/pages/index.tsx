@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito responsive
-const InfiniteCarousel = ({ places, speed = 30, favoritos, toggleFavorito, user }) => {
+const InfiniteCarousel = ({ places, speed = 30, favoritos, toggleFavorito, user, isDarkMode }) => {
   const router = useRouter()
   const [isHovered, setIsHovered] = useState(false)
   const [currentX, setCurrentX] = useState(0)
@@ -69,7 +69,7 @@ const InfiniteCarousel = ({ places, speed = 30, favoritos, toggleFavorito, user 
             style={{
               minWidth: 'clamp(220px, 45vw, 280px)',
               height: 'clamp(160px, 35vw, 200px)',
-              background: '#fff',
+              background: isDarkMode ? '#374151' : '#fff',
               borderRadius: '1rem',
               boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
               overflow: 'hidden',
@@ -191,6 +191,23 @@ export default function Home() {
   const [favoritos, setFavoritos] = useState([])
   const [userProfileImage, setUserProfileImage] = useState(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  const [totalVisitas, setTotalVisitas] = useState(0)
+
+  useEffect(() => {
+  const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  setIsDarkMode(darkModeMediaQuery.matches)
+  
+  const handler = (e) => setIsDarkMode(e.matches)
+  darkModeMediaQuery.addEventListener('change', handler)
+  
+  return () => darkModeMediaQuery.removeEventListener('change', handler)
+}, [])
+
+
+
 
   // ✅ Función para cargar imagen de perfil del usuario
   const fetchUserProfileImage = async (userId) => {
@@ -244,6 +261,26 @@ export default function Home() {
     fetchFavoritos()
   }, [user])
 
+  // ✅ Función para verificar si el usuario es administrador
+const checkAdminRole = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('perfil_usuario')
+      .select('rol')
+      .eq('id', userId)
+      .single()
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking admin role:', error)
+      return false
+    }
+
+    return data?.rol === 'admin'
+  } catch (err) {
+    console.error('Error checking admin role:', err)
+    return false
+  }
+}
   // Función para agregar/quitar favoritos
   const toggleFavorito = async (lugarId, e) => {
     if (e) {
@@ -302,63 +339,130 @@ export default function Home() {
     }
   }
 
-  // Cargar lugares desde Supabase
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      try {
-        setIsLoading(true)
-        const { data, error } = await supabase
-          .from('lugares')
-          .select('id, nombre, descripcion, municipio, url_imagen, destacado')
-        
-        if (error) {
-          console.error('Error al obtener lugares:', error)
-          console.error('Detalles del error:', error.message)
-        } else {
-          console.log('Datos obtenidos:', data)
-          setPlaces(data || [])
-        }
-      } catch (error) {
-        console.error('Error al conectar con Supabase:', error)
-      } finally {
-        setIsLoading(false)
+// 1. Cargar lugares desde Supabase
+useEffect(() => {
+  const fetchPlaces = async () => {
+    try {
+      setIsLoading(true)
+      const { data, error } = await supabase
+        .from('lugares')
+        .select('id, nombre, descripcion, municipio, url_imagen, destacado')
+
+      if (error) {
+        console.error('Error al obtener lugares:', error)
+        console.error('Detalles del error:', error.message)
+      } else {
+        console.log('Datos obtenidos:', data)
+        setPlaces(data || [])
       }
+    } catch (error) {
+      console.error('Error al conectar con Supabase:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  fetchPlaces()
+}, [])
+
+// 2. Verificar autenticación y suscripción
+useEffect(() => {
+  let subscription
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user) {
+      setIsAuthenticated(true)
+      setUser(session.user)
+      fetchUserProfileImage(session.user.id)
+      const adminStatus = await checkAdminRole(session.user.id)
+      setIsAdmin(adminStatus)
     }
 
-    fetchPlaces()
-  }, [])
-
-  // ✅ Verificar autenticación y cargar imagen de perfil
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setIsAuthenticated(true)
-        setUser(session.user)
-        // ✅ Cargar imagen de perfil cuando el usuario está autenticado
-        fetchUserProfileImage(session.user.id)
-      }
-    }
-
-    checkAuth()
-
-    // Suscribirse a cambios en sesión
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setIsAuthenticated(!!session?.user)
       setUser(session?.user ?? null)
-      
-      // ✅ Cargar imagen cuando cambia la sesión
+
       if (session?.user) {
         fetchUserProfileImage(session.user.id)
+        const adminStatus = await checkAdminRole(session.user.id)
+        setIsAdmin(adminStatus)
       } else {
         setUserProfileImage(null)
+        setIsAdmin(false)
       }
     })
 
-    return () => {
-      listener.subscription.unsubscribe()
+    subscription = data.subscription
+  }
+
+  checkAuth()
+
+  return () => {
+    subscription?.unsubscribe()
+  }
+}, [])
+
+// 3. Contador de visitas
+useEffect(() => {
+  const fetchVisitas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contador_visitas')
+        .select('total_visitas')
+        .eq('id', 1)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching visits:', error)
+        return
+      }
+
+      const visitasActuales = data?.total_visitas || 0
+      setTotalVisitas(visitasActuales + 1)
+
+      await supabase
+        .from('contador_visitas')
+        .upsert({
+          id: 1,
+          total_visitas: visitasActuales + 1
+        })
+    } catch (err) {
+      console.error('Error with visit counter:', err)
     }
-  }, [])
+  }
+
+  fetchVisitas()
+}, [])
+
+// 4. Favoritos por usuario
+useEffect(() => {
+  const fetchFavoritos = async () => {
+    if (!user) {
+      setFavoritos([])
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('favoritos')
+        .select('lugar_id')
+        .eq('usuario_id', user.id)
+
+      if (error) {
+        console.error('Error al obtener favoritos:', error)
+      } else {
+        setFavoritos(data ? data.map(f => f.lugar_id) : [])
+      }
+    } catch (error) {
+      console.error('Error al conectar con favoritos:', error)
+    }
+  }
+
+  fetchFavoritos()
+}, [user])
+ 
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -398,7 +502,10 @@ export default function Home() {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        background: 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
+        background: isDarkMode 
+  ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
+  : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
+
         padding: '1rem'
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -457,7 +564,7 @@ export default function Home() {
                 alt="Logo" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
-            </div>
+                   </div>
             <h2 style={{ 
               margin: 0, 
               fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', 
@@ -467,6 +574,28 @@ export default function Home() {
               CULTOUR
             </h2>
           </div>
+
+          {/* Toggle de modo oscuro */}
+          <button
+  onClick={() => setIsDarkMode(!isDarkMode)}
+  style={{
+    background: 'rgba(255,255,255,0.2)',
+    border: 'none',
+    color: 'white',
+    padding: 'clamp(0.4rem, 1vw, 0.5rem)',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+>
+  {isDarkMode ? '☀️' : '🌙'}
+</button>
 
           {/* Desktop Navigation */}
           <nav style={{ display: 'none' }} className="desktop-nav">
@@ -507,7 +636,7 @@ export default function Home() {
                 onClick={() => router.push('/auth/login')}
                 style={{ 
                   backgroundColor: 'white', 
-                  color: '#004e92', 
+                  color: isDarkMode ? '#60a5fa' : '#004e92',
                   padding: 'clamp(0.4rem, 1.5vw, 0.5rem) clamp(0.8rem, 2.5vw, 1rem)', 
                   border: 'none', 
                   borderRadius: '0.5rem', 
@@ -544,6 +673,8 @@ export default function Home() {
                     height: 'clamp(30px, 6vw, 35px)', 
                     borderRadius: '50%', 
                     background: 'white', 
+                    color: isDarkMode ? '#f9fafb' : '#333',
+border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
@@ -601,7 +732,7 @@ export default function Home() {
                     top: '100%', 
                     right: 0, 
                     marginTop: '0.5rem',
-                    background: 'white', 
+                    background: isDarkMode ? '#374151' : 'white',
                     borderRadius: '0.8rem', 
                     boxShadow: '0 8px 30px rgba(0,0,0,0.15)', 
                     minWidth: 'clamp(180px, 40vw, 200px)', 
@@ -611,7 +742,7 @@ export default function Home() {
                     <div style={{ 
                       padding: '1rem', 
                       borderBottom: '1px solid #eee', 
-                      color: '#333' 
+                      color: isDarkMode ? '#f9fafb' : '#333', 
                     }}>
                       <div style={{ 
                         fontWeight: 'bold', 
@@ -638,7 +769,7 @@ export default function Home() {
                         padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
                         border: 'none', 
                         background: 'transparent', 
-                        color: '#333', 
+                        color: isDarkMode ? '#f9fafb' : '#333', 
                         textAlign: 'left', 
                         cursor: 'pointer',
                         fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
@@ -660,7 +791,7 @@ export default function Home() {
                         padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
                         border: 'none', 
                         background: 'transparent', 
-                        color: '#333', 
+                        color: isDarkMode ? '#f9fafb' : '#333',
                         textAlign: 'left', 
                         cursor: 'pointer',
                         fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
@@ -671,6 +802,30 @@ export default function Home() {
                     >
                       ❤️ Mis Favoritos
                     </button>
+                    {isAdmin && (
+  <button 
+    onClick={() => {
+      setShowUserMenu(false)
+      router.push('/admin')
+    }} 
+    style={{ 
+      width: '100%', 
+      padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
+      border: 'none', 
+      background: 'transparent', 
+      color: isDarkMode ? '#f9fafb' : '#333',
+      textAlign: 'left', 
+      cursor: 'pointer',
+      fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
+      transition: 'background 0.2s ease'
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+  >
+    ⚙️ Panel de Administración
+  </button>
+)}
+
                     
                     <div style={{ borderTop: '1px solid #eee' }}>
                       <button 
@@ -803,7 +958,9 @@ export default function Home() {
       <main style={{ 
         flex: 1,
         padding: '1.5rem 1rem', 
-        background: 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
+          background: isDarkMode 
+          ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
+          : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
         minHeight: '100vh'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -818,9 +975,40 @@ export default function Home() {
             }}>
               Descubre la Sierra Gorda
             </h1>
+            <div style={{
+  background: isDarkMode ? 'rgba(45,45,45,0.9)' : 'rgba(255,255,255,0.9)',
+  padding: '1rem 1.5rem',
+  borderRadius: '1rem',
+  marginBottom: '1rem',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: '1rem'
+}}>
+ <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: isDarkMode ? '#60a5fa' : '#004e92' }}>
+    {user ? (
+      <span>👋 ¡Hola, <strong>{user.name || user.email?.split('@')[0] || 'Usuario'}!</strong></span>
+    ) : (
+      <span>👋 ¡Bienvenido a Cultour!</span>
+    )}
+  </div>
+  <div style={{ 
+    fontSize: 'clamp(0.9rem, 2vw, 1rem)', 
+    color: isDarkMode ? '#34d399' : '#00a86b',
+    
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  }}>
+    <span>👥</span>
+    <span><strong>{totalVisitas.toLocaleString()}</strong> visitas</span>
+  </div>
+</div>
             <h2 style={{ 
               fontSize: '1.6rem', 
-              color: '#00a86b', 
+              color: isDarkMode ? '#34d399' : '#00a86b', 
               margin: '0 0 1rem 0',
               fontWeight: '300',
               letterSpacing: '1px'
@@ -829,7 +1017,8 @@ export default function Home() {
             </h2>
             <p style={{ 
               fontSize: '1.1rem', 
-              color: '#555', 
+              color: isDarkMode ? '#d1d5db' : '#555',
+
               maxWidth: '600px',
               margin: '0 auto',
               lineHeight: '1.6'
@@ -853,13 +1042,13 @@ export default function Home() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ 
-                background: 'white',
-                color: '#333',
+                background: isDarkMode ? '#374151' : 'white',
+                color: isDarkMode ? '#f9fafb' : '#333',
                 padding: '1rem 1.2rem', 
                 width: '90%',
                 maxWidth: '400px',
                 borderRadius: '2rem',
-                border: '2px solid #ddd',
+               border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 fontSize: '1rem',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
                 transition: 'all 0.3s ease'
@@ -881,9 +1070,9 @@ export default function Home() {
                 maxWidth: '300px',
                 padding: '0.8rem 1.2rem', 
                 borderRadius: '1rem',
-                border: '2px solid #ddd',
+               border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 fontSize: '1rem',
-                background: 'white',
+                background: isDarkMode ? '#374151' : 'white',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                 cursor: 'pointer'
               }}
@@ -922,14 +1111,14 @@ export default function Home() {
                 <div>
                   <h2 style={{ 
                     fontSize: '2rem', 
-                    color: '#004e92', 
+                    color: isDarkMode ? '#60a5fa' : '#004e92',
                     margin: '0 0 1.5rem 0',
                     fontWeight: 'bold',
                     textAlign: 'center'
                   }}>
                     🏛️ Lugares Destacados
                   </h2>
-                  <InfiniteCarousel places={firstRowPlaces} speed={60} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} />
+                  <InfiniteCarousel places={firstRowPlaces} speed={60} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} isDarkMode={isDarkMode} />
                 </div>
               )}
               
@@ -937,14 +1126,14 @@ export default function Home() {
                 <div>
                   <h2 style={{ 
                     fontSize: '2rem', 
-                    color: '#00a86b', 
+                   color: isDarkMode ? '#34d399' : '#00a86b', 
                     margin: '2rem 0 1.5rem 0',
                     fontWeight: 'bold',
                     textAlign: 'center'
                   }}>
                     🌿 Naturaleza y Aventura
                   </h2>
-                  <InfiniteCarousel places={secondRowPlaces} speed={50} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} />
+                  <InfiniteCarousel places={secondRowPlaces} speed={50} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} isDarkMode={isDarkMode} />
                 </div>
               )}
             </section>
@@ -961,9 +1150,10 @@ export default function Home() {
                 <h2
                   style={{
                     fontSize: '1.8rem',
-                    color: '#004e92',
+                    color: isDarkMode ? '#60a5fa' : '#004e92',
                     marginBottom: '1rem',
-                    borderBottom: '3px solid #00a86b',
+                    borderBottom: isDarkMode ? '3px solid #34d399' : '3px solid #00a86b',
+
                     paddingBottom: '0.5rem'
                   }}
                 >
@@ -979,7 +1169,7 @@ export default function Home() {
                       key={place.id}
                       onClick={() => router.push(`/lugares/${place.id}`)}
                       style={{
-                        background: '#fff',
+                        background: isDarkMode ? '#374151' : '#fff',
                         borderRadius: '1.5rem',
                         boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
                         overflow: 'hidden',
@@ -1067,7 +1257,7 @@ export default function Home() {
                       </div>
                       <div style={{ padding: '1.5rem 2rem' }}>
                         <h3 style={{
-                          color: '#004e92',
+                          color: isDarkMode ? '#60a5fa' : '#004e92',
                           margin: '0 0 0.5rem 0',
                           fontSize: '1.4rem',
                           fontWeight: 'bold'
@@ -1075,7 +1265,7 @@ export default function Home() {
                           {place.nombre}
                         </h3>
                         <p style={{
-                          color: '#666',
+                          color: isDarkMode ? '#d1d5db' : '#666',
                           margin: 0,
                           fontSize: '1rem',
                           lineHeight: '1.5'
@@ -1095,7 +1285,7 @@ export default function Home() {
             <div style={{
               textAlign: 'center',
               padding: '4rem 2rem',
-              color: '#666'
+              color: isDarkMode ? '#d1d5db' : '#666'
             }}>
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
                 No se encontraron lugares
