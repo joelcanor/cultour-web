@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 import { motion } from 'framer-motion'
 import ReCAPTCHA from 'react-google-recaptcha'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -193,7 +194,7 @@ if (error) {
           transition={{ delay: 0.2, duration: 0.5 }}
           style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}
         >
-          <img 
+          <Image
             src="/logo.jpg" 
             alt="Logo" 
             style={{ 
@@ -415,7 +416,7 @@ if (error) {
             whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
             whileTap={{ scale: 0.98 }}
           >
-            <img 
+            <Image
               src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" 
               alt="Google" 
               style={{ width: '20px', marginRight: '10px' }} 
@@ -434,7 +435,7 @@ if (error) {
             whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0, 78, 146, 0.3)' }}
             whileTap={{ scale: 0.98 }}
           >
-            <img 
+            <Image
               src="https://cdn-icons-png.flaticon.com/512/847/847969.png" 
               alt="Registro" 
               style={{ width: '20px', marginRight: '10px' }} 

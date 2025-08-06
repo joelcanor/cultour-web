@@ -17,28 +17,7 @@ export default function Contacto(props) {
     })
   }
 
-  const handleEmailFallback = (subject, body) => {
-    const textToCopy = `Para: cultourweb@gmail.com
-Asunto: ${subject}
 
-${body}`
-    
-    // Intentar copiar al portapapeles
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        alert(`📋 Los datos se han copiado al portapapeles. 
-        
-Pégalos en tu cliente de email y envía a:
-cultourweb@gmail.com
-
-O puedes usar Gmail web: https://mail.google.com`)
-      }).catch(() => {
-        showManualCopyInstructions(textToCopy)
-      })
-    } else {
-      showManualCopyInstructions(textToCopy)
-    }
-  }
 
   const showManualCopyInstructions = (textToCopy) => {
     // Crear un modal o ventana con el texto para copiar manualmente
