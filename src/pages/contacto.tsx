@@ -17,12 +17,6 @@ export default function Contacto(props) {
     })
   }
 
-  const handleEmailSubmit = (e) => {
-    // Esta función ya no se necesita, pero la dejamos para no romper nada
-    e.preventDefault()
-    handleGmailDirect(e)
-  }
-
   const handleEmailFallback = (subject, body) => {
     const textToCopy = `Para: cultourweb@gmail.com
 Asunto: ${subject}

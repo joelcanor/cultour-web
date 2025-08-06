@@ -1,3 +1,4 @@
+import Link from 'next/link'
 export default function Footer() {
   return (
     <footer style={{
@@ -62,7 +63,7 @@ export default function Footer() {
           >
             Términos
           </a>
-          <a 
+          <Link
             href="/contacto" 
             style={{ 
               color: 'rgba(255,255,255,0.8)', 
@@ -74,7 +75,7 @@ export default function Footer() {
             onMouseLeave={e => (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.8)'}
           >
             Contacto
-          </a>
+          </Link>
         </div>
       </div>
     </footer>

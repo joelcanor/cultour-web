@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import Image from 'next/image'
 
 export default function LugarDetalle() {
   const router = useRouter()
@@ -93,7 +94,7 @@ export default function LugarDetalle() {
         {/* Header del lugar con diseño más moderno */}
         <div className="group bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden mb-8 border border-white/20 dark:border-slate-700/50 hover:shadow-3xl transition-all duration-700">
           <div className="relative overflow-hidden">
-            <img 
+            <Image
               src={lugar.url_imagen} 
               alt={lugar.nombre} 
               className="w-full h-72 md:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
@@ -186,7 +187,7 @@ export default function LugarDetalle() {
                   >
                     <div className="flex items-start gap-5">
                       <div className="relative">
-                        <img
+                        <Image
                           src={c.perfil_usuario?.foto_url || '/default-avatar.png'}
                           alt="avatar"
                           className="w-14 h-14 rounded-2xl object-cover border-3 border-gradient-to-r from-blue-400 to-purple-500 shadow-lg group-hover:scale-110 transition-transform duration-300"
@@ -247,7 +248,7 @@ export default function LugarDetalle() {
               <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-700/30 dark:to-slate-600/30 rounded-2xl p-6 border-t-2 border-gradient-to-r from-blue-200 to-purple-200 dark:border-slate-600">
                 <div className="flex gap-5">
                   <div className="relative">
-                    <img
+                    <Image
                       src="/default-avatar.png"
                       alt="Tu avatar"
                       className="w-12 h-12 rounded-2xl object-cover border-2 border-blue-300 dark:border-blue-500 shadow-lg"

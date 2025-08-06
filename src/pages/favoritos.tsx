@@ -2,6 +2,7 @@ import Layout from '@/components/Layout'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/router'
+import Image from 'next/image'
 
 export default function Favoritos(props) {
   const { user } = props
@@ -434,7 +435,7 @@ export default function Favoritos(props) {
                       position: 'relative',
                       overflow: 'hidden'
                     }}>
-                      <img 
+                      <Image
                         src={lugar.url_imagen} 
                         alt={lugar.nombre} 
                         style={{ 
@@ -549,8 +550,8 @@ export default function Favoritos(props) {
                   No se encontraron resultados
                 </h3>
                 <p style={{ fontSize: '1rem' }}>
-                  No hay lugares favoritos que coincidan con "<strong>{filtro}</strong>"
-                </p>
+  No hay lugares favoritos que coincidan con &quot;<strong>{filtro}</strong>&quot;
+</p>
                 <button
                   onClick={() => setFiltro('')}
                   style={{

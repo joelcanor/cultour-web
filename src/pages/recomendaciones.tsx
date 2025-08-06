@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabaseClient'
+import Image from 'next/image'
 
 export default function Recomendaciones(props) {
   const { user } = props
@@ -91,7 +92,7 @@ export default function Recomendaciones(props) {
           cursor: 'pointer'
         }}
           onClick={() => window.location.href = `/lugares/${lugar.id}`}>
-          <img src={lugar.url_imagen} alt={lugar.nombre} style={{
+          <Image src={lugar.url_imagen} alt={lugar.nombre} style={{
             width: '100%',
             height: '200px',
             objectFit: 'cover'

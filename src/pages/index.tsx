@@ -6,7 +6,7 @@ import Image from 'next/image'
 const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito responsive
-const InfiniteCarousel = ({ places,speed, favoritos, toggleFavorito,user, isDarkMode }) => {
+const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => {
   const router = useRouter()
   const [isHovered, setIsHovered] = useState(false)
   const [currentX, setCurrentX] = useState(0)
@@ -1308,7 +1308,7 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
                 No se encontraron lugares que coincidan con tu búsqueda
               </h3>
-              <p>Intenta con otros términos de búsqueda o selecciona "Todos" los municipios.</p>
+         <p>Intenta con otros términos de búsqueda o selecciona &quot;Todos&quot; los municipios.</p>
             </div>
           )}
         </div>

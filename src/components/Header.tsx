@@ -1,9 +1,14 @@
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import Image from 'next/image'
 
 type HeaderProps = {
-  user: any
+  user: {
+  id: string
+  email?: string
+  name?: string
+} | null
   isAuthenticated: boolean
   showUserMenu: boolean
   setShowUserMenu: (value: boolean) => void
@@ -91,7 +96,7 @@ export default function Header({
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <img 
+              <Image 
                 src="logo.jpg" 
                 alt="Logo" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -191,7 +196,7 @@ export default function Header({
                   }}>
                     {/* ✅ Mostrar imagen de perfil o emoji por defecto */}
                     {userProfileImage ? (
-                      <img 
+                      <Image
                         src={`${userProfileImage}?t=${Date.now()}`} 
                         alt="Perfil" 
                         style={{ 
