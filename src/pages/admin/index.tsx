@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export default function AdminDashboard() {
   const [usuarios, setUsuarios] = useState([])
-  const [lugares, setLugares] = useState([])
+  // Eliminamos las variables no utilizadas
   const [adminInfo, setAdminInfo] = useState(null)
-  const handleLogout = async () => {
-  await supabase.auth.signOut()
-  router.push('/') // o a "/login" si prefieres
-}
-  const [visitasTotales, setVisitasTotales] = useState(0)
   const [stats, setStats] = useState({
     totalUsuarios: 0,
     totalLugares: 0,
@@ -20,6 +17,11 @@ export default function AdminDashboard() {
   })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/') // o a "/login" si prefieres
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,8 +62,6 @@ export default function AdminDashboard() {
         
         if (lugaresError) {
           console.error('Error al obtener lugares:', lugaresError)
-        } else {
-          setLugares(lugaresData || [])
         }
 
         // Obtener visitas totales del sitio
@@ -73,8 +73,6 @@ export default function AdminDashboard() {
 
         if (visitasError) {
           console.error('Error al obtener visitas:', visitasError)
-        } else {
-          setVisitasTotales(visitasData?.total_visitas || 0)
         }
 
         // Calcular estadísticas
@@ -156,12 +154,12 @@ export default function AdminDashboard() {
       {/* Sidebar */}
       <aside style={sidebarStyle}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img 
+          <Image 
             src="/logo.jpg" 
             alt="Cultour Logo" 
+            width={80}
+            height={80}
             style={{ 
-              width: '80px', 
-              height: '80px', 
               borderRadius: '50%', 
               marginBottom: '0.5rem',
               border: '3px solid rgba(255,255,255,0.3)',
@@ -189,33 +187,31 @@ export default function AdminDashboard() {
         <nav>
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
-              <a href="/admin" style={linkActiveStyle}>
+              <Link href="/admin" style={linkActiveStyle}>
                 📊 Resumen General
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/admin/usuarios" style={linkStyle}>
+              <Link href="/admin/usuarios" style={linkStyle}>
                 👥 Gestión de Usuarios
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/admin/lugares" style={linkStyle}>
+              <Link href="/admin/lugares" style={linkStyle}>
                 📍 Gestión de Lugares
-              </a>
+              </Link>
             </li>
             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-              <a href="/" style={linkStyle}>
+              <Link href="/" style={linkStyle}>
                 🏠 Ir al Sitio Web
-              </a>
+              </Link>
             </li>
             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-  <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
-    🔒 Cerrar Sesión
-  </button>
-</li>
-
+              <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
+                🔒 Cerrar Sesión
+              </button>
+            </li>
           </ul>
-
         </nav>
       </aside>
 
@@ -232,15 +228,16 @@ export default function AdminDashboard() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px solid rgba(255,255,255,0.3)'
+              border: '2px solid rgba(255,255,255,0.3)',
+              overflow: 'hidden'
             }}>
               {adminInfo?.foto_url ? (
-                <img 
+                <Image 
                   src={adminInfo.foto_url} 
                   alt="Admin" 
+                  width={60}
+                  height={60}
                   style={{ 
-                    width: '100%', 
-                    height: '100%', 
                     borderRadius: '50%', 
                     objectFit: 'cover' 
                   }}
@@ -396,12 +393,12 @@ export default function AdminDashboard() {
             {usuarios.slice(0, 6).map((usuario) => (
               <div key={usuario.id} style={userRowStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                  <img 
+                  <Image 
                     src={usuario.foto_url || '/default-avatar.png'} 
                     alt="foto" 
+                    width={35}
+                    height={35}
                     style={{ 
-                      width: '35px', 
-                      height: '35px', 
                       borderRadius: '50%', 
                       objectFit: 'cover',
                       border: '2px solid #e0e0e0'

@@ -2,10 +2,11 @@
 import Header from './Header'
 import Footer from './Footer'
 import { ReactNode } from 'react'
+import type { User } from '@supabase/supabase-js'
 
 type LayoutProps = {
   children: ReactNode
-  user: any
+  user: User | null  // <-- Cambio aquí
   isAuthenticated: boolean
   showUserMenu: boolean
   setShowUserMenu: (value: boolean) => void

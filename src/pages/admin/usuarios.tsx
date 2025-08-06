@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export default function UsuariosAdmin() {
   const [usuarios, setUsuarios] = useState([])
@@ -272,7 +274,7 @@ export default function UsuariosAdmin() {
       {/* Sidebar */}
       <aside style={sidebarStyle}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img 
+          <Image 
             src="/logo.jpg" 
             alt="Cultour Logo" 
             style={{ 
@@ -305,24 +307,24 @@ export default function UsuariosAdmin() {
         <nav>
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
-              <a href="/admin" style={linkStyle}>
+             <Link href="/admin" style={linkStyle}>
                 📊 Resumen General
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/admin/usuarios" style={linkActiveStyle}>
+              <Link href="/admin/usuarios" style={linkActiveStyle}>
                 👥 Gestión de Usuarios
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/admin/lugares" style={linkStyle}>
+              <Link href="/admin/lugares" style={linkStyle}>
                 📍 Gestión de Lugares
-              </a>
+              </Link>
             </li>
             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-              <a href="/" style={linkStyle}>
+              <Link href="/" style={linkStyle}>
                 🏠 Ir al Sitio Web
-              </a>
+              </Link>
             </li>
                         <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
   <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
@@ -472,7 +474,7 @@ export default function UsuariosAdmin() {
                 {filteredUsuarios.map(user => (
                   <tr key={user.id} style={trStyle}>
                     <td style={td}>
-                      <img
+                      <Image
                         src={user.foto_url || '/logo.jpg'}
                         alt="avatar"
                         style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}

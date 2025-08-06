@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export default function LugaresAdmin() {
   const [lugares, setLugares] = useState([])
@@ -153,7 +155,7 @@ export default function LugaresAdmin() {
       {/* Sidebar */}
       <aside style={sidebarStyle}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img 
+          <Image 
             src="/logo.jpg" 
             alt="Cultour Logo" 
             style={{ 
@@ -186,24 +188,24 @@ export default function LugaresAdmin() {
         <nav>
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
-              <a href="/admin" style={linkStyle}>
+              <Link href="/admin" style={linkStyle}>
                 📊 Resumen General
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/admin/usuarios" style={linkStyle}>
+              <Link href="/admin/usuarios" style={linkStyle}>
                 👥 Gestión de Usuarios
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/admin/lugares" style={linkActiveStyle}>
+              <Link href="/admin/lugares" style={linkActiveStyle}>
                 📍 Gestión de Lugares
-              </a>
+              </Link>
             </li>
             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-              <a href="/" style={linkStyle}>
+              <Link href="/" style={linkStyle}>
                 🏠 Ir al Sitio Web
-              </a>
+              </Link>
             </li>
              
              <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
@@ -339,7 +341,7 @@ export default function LugaresAdmin() {
               {filteredLugares.map((lugar) => (
                 <div key={lugar.id} style={placeCardStyle}>
                   <div style={{ position: 'relative' }}>
-                    <img 
+                    <Image 
                       src={lugar.url_imagen} 
                       alt={lugar.nombre} 
                       style={placeImageStyle}

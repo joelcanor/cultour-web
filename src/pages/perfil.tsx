@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Layout from '@/components/Layout'
+import type { User } from '@supabase/supabase-js'
+import Image from 'next/image'
 
 export default function PerfilPage() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -156,8 +158,12 @@ export default function PerfilPage() {
       setImageUrl(foto_url)
       setSuccess('¡Imagen de perfil actualizada exitosamente!')
       setFile(null)
-    } catch (err: any) {
-      setError(err.message || 'Error al subir la imagen')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Error al subir la imagen')
+      } else {
+        setError('Error desconocido')
+      }
     } finally {
       setLoading(false)
     }
@@ -181,8 +187,12 @@ export default function PerfilPage() {
       }
 
       setSuccess('¡Perfil actualizado exitosamente!')
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar el perfil')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Error al actualizar el perfil')
+      } else {
+        setError('Error desconocido')
+      }
     } finally {
       setLoadingProfile(false)
     }
@@ -243,7 +253,7 @@ export default function PerfilPage() {
                 marginBottom: '1.5rem'
               }}>
                 {imageUrl ? (
-                  <img 
+                  <Image 
                     src={`${imageUrl}?t=${Date.now()}`} 
                     alt="Foto de perfil" 
                     style={{ 

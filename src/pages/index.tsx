@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
+import Image from 'next/image'
 
 const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito responsive
-const InfiniteCarousel = ({ places, speed = 30, favoritos, toggleFavorito, user, isDarkMode }) => {
+const InfiniteCarousel = ({ places,speed, favoritos, toggleFavorito,user, isDarkMode }) => {
   const router = useRouter()
   const [isHovered, setIsHovered] = useState(false)
   const [currentX, setCurrentX] = useState(0)
@@ -81,7 +82,7 @@ const InfiniteCarousel = ({ places, speed = 30, favoritos, toggleFavorito, user,
               zIndex: isHovered ? 10 : 1
             }}
           >
-            <img
+            <Image
               src={place.url_imagen}
               alt={place.nombre}
               style={{
@@ -559,7 +560,7 @@ useEffect(() => {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <img 
+              <Image
                 src="logo.jpg" 
                 alt="Logo" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -683,7 +684,7 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                   }}>
                     {/* ✅ Mostrar imagen de perfil o emoji por defecto */}
                     {userProfileImage ? (
-                      <img 
+                      <Image
                         src={`${userProfileImage}?t=${Date.now()}`} 
                         alt="Perfil" 
                         style={{ 
@@ -1221,8 +1222,8 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                             <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
                           )}
                         </div>
-                        
-                        <img
+
+                        <Image
                           src={place.url_imagen}
                           alt={place.nombre}
                           style={{

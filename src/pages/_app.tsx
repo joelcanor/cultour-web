@@ -2,9 +2,10 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import type { User } from '@supabase/supabase-js'
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
 
