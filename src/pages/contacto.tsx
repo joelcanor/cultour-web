@@ -1,5 +1,5 @@
 import Layout from '@/components/Layout'
-import { useState } from 'react'
+import { useState, ChangeEvent, FormEvent } from 'react'
 
 export default function Contacto() {
   const [formData, setFormData] = useState({
@@ -10,14 +10,14 @@ export default function Contacto() {
     mensaje: ''
   })
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     })
   }
 
-  const handleWhatsAppSubmit = (e) => {
+  const handleWhatsAppSubmit = (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault()
     
     // Validar campos requeridos
@@ -54,7 +54,7 @@ _Desde cultour web_`
   }
 
   // Nuevo método: Abrir Gmail directamente
-  const handleGmailDirect = (e) => {
+  const handleGmailDirect = (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault()
     
     // Validar campos requeridos
@@ -173,12 +173,12 @@ Saludos desde la web de Cultour`
                 boxShadow: '0 4px 15px rgba(37, 211, 102, 0.3)'
               }}
               onMouseEnter={e => {
-                e.target.style.transform = 'translateY(-5px)'
-                e.target.style.boxShadow = '0 8px 25px rgba(37, 211, 102, 0.4)'
+                e.currentTarget.style.transform = 'translateY(-5px)'
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(37, 211, 102, 0.4)'
               }}
               onMouseLeave={e => {
-                e.target.style.transform = 'translateY(0px)'
-                e.target.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)'
+                e.currentTarget.style.transform = 'translateY(0px)'
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)'
               }}
             >
               <div style={{
@@ -221,12 +221,12 @@ Saludos desde la web de Cultour`
                 boxShadow: '0 4px 15px rgba(234, 67, 53, 0.3)'
               }}
               onMouseEnter={e => {
-                e.target.style.transform = 'translateY(-5px)'
-                e.target.style.boxShadow = '0 8px 25px rgba(234, 67, 53, 0.4)'
+                e.currentTarget.style.transform = 'translateY(-5px)'
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(234, 67, 53, 0.4)'
               }}
               onMouseLeave={e => {
-                e.target.style.transform = 'translateY(0px)'
-                e.target.style.boxShadow = '0 4px 15px rgba(234, 67, 53, 0.3)'
+                e.currentTarget.style.transform = 'translateY(0px)'
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(234, 67, 53, 0.3)'
               }}
             >
               <div style={{
@@ -415,8 +415,8 @@ Saludos desde la web de Cultour`
                       transition: 'all 0.3s ease',
                       boxSizing: 'border-box'
                     }}
-                    onFocus={e => e.target.style.borderColor = '#004e92'}
-                    onBlur={e => e.target.style.borderColor = '#e0e0e0'}
+                    onFocus={e => e.currentTarget.style.borderColor = '#004e92'}
+                    onBlur={e => e.currentTarget.style.borderColor = '#e0e0e0'}
                   />
                 </div>
 
@@ -443,8 +443,8 @@ Saludos desde la web de Cultour`
                       transition: 'all 0.3s ease',
                       boxSizing: 'border-box'
                     }}
-                    onFocus={e => e.target.style.borderColor = '#004e92'}
-                    onBlur={e => e.target.style.borderColor = '#e0e0e0'}
+                    onFocus={e => e.currentTarget.style.borderColor = '#004e92'}
+                    onBlur={e => e.currentTarget.style.borderColor = '#e0e0e0'}
                   />
                 </div>
               </div>
@@ -473,8 +473,8 @@ Saludos desde la web de Cultour`
                     transition: 'all 0.3s ease',
                     boxSizing: 'border-box'
                   }}
-                  onFocus={e => e.target.style.borderColor = '#004e92'}
-                  onBlur={e => e.target.style.borderColor = '#e0e0e0'}
+                  onFocus={e => e.currentTarget.style.borderColor = '#004e92'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#e0e0e0'}
                 />
               </div>
 
@@ -502,8 +502,8 @@ Saludos desde la web de Cultour`
                     boxSizing: 'border-box',
                     cursor: 'pointer'
                   }}
-                  onFocus={e => e.target.style.borderColor = '#004e92'}
-                  onBlur={e => e.target.style.borderColor = '#e0e0e0'}
+                  onFocus={e => e.currentTarget.style.borderColor = '#004e92'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#e0e0e0'}
                 >
                   <option value="">Selecciona un tema</option>
                   <option value="información sobre la app">Información sobre la app</option>
@@ -530,7 +530,7 @@ Saludos desde la web de Cultour`
                   value={formData.mensaje}
                   onChange={handleChange}
                   required
-                  rows="5"
+                  rows={5}
                   placeholder="Describe tu consulta, problema o sugerencia con detalle..."
                   style={{
                     width: '100%',
@@ -543,8 +543,8 @@ Saludos desde la web de Cultour`
                     resize: 'vertical',
                     minHeight: '120px'
                   }}
-                  onFocus={e => e.target.style.borderColor = '#004e92'}
-                  onBlur={e => e.target.style.borderColor = '#e0e0e0'}
+                  onFocus={e => e.currentTarget.style.borderColor = '#004e92'}
+                  onBlur={e => e.currentTarget.style.borderColor = '#e0e0e0'}
                 />
               </div>
 
@@ -570,12 +570,12 @@ Saludos desde la web de Cultour`
                     boxShadow: '0 4px 15px rgba(37, 211, 102, 0.3)'
                   }}
                   onMouseEnter={e => {
-                    e.target.style.transform = 'translateY(-2px)'
-                    e.target.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)'
                   }}
                   onMouseLeave={e => {
-                    e.target.style.transform = 'translateY(0px)'
-                    e.target.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)'
+                    e.currentTarget.style.transform = 'translateY(0px)'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(37, 211, 102, 0.3)'
                   }}
                 >
                   📱 Enviar por WhatsApp
@@ -597,12 +597,12 @@ Saludos desde la web de Cultour`
                     boxShadow: '0 4px 15px rgba(234, 67, 53, 0.3)'
                   }}
                   onMouseEnter={e => {
-                    e.target.style.transform = 'translateY(-2px)'
-                    e.target.style.boxShadow = '0 6px 20px rgba(234, 67, 53, 0.4)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(234, 67, 53, 0.4)'
                   }}
                   onMouseLeave={e => {
-                    e.target.style.transform = 'translateY(0px)'
-                    e.target.style.boxShadow = '0 4px 15px rgba(234, 67, 53, 0.3)'
+                    e.currentTarget.style.transform = 'translateY(0px)'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(234, 67, 53, 0.3)'
                   }}
                 >
                   🌐 Enviar por Gmail Web
@@ -785,11 +785,7 @@ Saludos desde la web de Cultour`
             gap: '1.5rem',
             flexWrap: 'wrap'
           }}>
-          
-
-            
-
-    
+            {/* Aquí puedes agregar enlaces a redes sociales cuando estén disponibles */}
           </div>
         </section>
       </div>
