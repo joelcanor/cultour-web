@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout'
 import { useState } from 'react'
 
-export default function Contacto(props) {
+export default function Contacto(props: any) {
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',

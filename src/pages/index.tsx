@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, MouseEvent } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
