@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, MouseEvent } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
+import Link from 'next/link'
+
 
 // Tipos TypeScript
 interface Lugar {
@@ -652,36 +654,47 @@ const fetchUserProfileImage = async (userId: string): Promise<void> => {
           margin: '0 auto'
         }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.5rem, 2vw, 0.8rem)' }}>
-            <div style={{ 
-              width: 'clamp(40px, 8vw, 50px)', 
-              height: 'clamp(40px, 8vw, 50px)', 
-              borderRadius: '50%', 
-              overflow: 'hidden',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-              background: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-             <Image 
-  src="/logo.jpg" 
-  alt="Logo"
-  width={45}
-  height={45}
-  style={{ objectFit: 'cover' }}
-/>
+          {/* Logo (clic → vuelve a /) */}
+<Link 
+  href="/" 
+  style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: 'clamp(0.5rem, 2vw, 0.8rem)',
+    textDecoration: 'none', 
+    color: 'inherit',
+    cursor: 'pointer'
+  }}
+>
+  <div style={{ 
+    width: 'clamp(40px, 8vw, 50px)', 
+    height: 'clamp(40px, 8vw, 50px)', 
+    borderRadius: '50%', 
+    overflow: 'hidden',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+    background: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}>
+    <Image 
+      src="/logo.jpg" 
+      alt="Logo"
+      width={45}
+      height={45}
+      style={{ objectFit: 'cover' }}
+    />
+  </div>
+  <h2 style={{ 
+    margin: 0, 
+    fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', 
+    fontWeight: 'bold', 
+    letterSpacing: 'clamp(1px, 0.3vw, 2px)' 
+  }}>
+    CULTOUR
+  </h2>
+</Link>
 
-            </div>
-            <h2 style={{ 
-              margin: 0, 
-              fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', 
-              fontWeight: 'bold', 
-              letterSpacing: 'clamp(1px, 0.3vw, 2px)' 
-            }}>
-              CULTOUR
-            </h2>
-          </div>
 
           {/* Desktop Navigation */}
           <nav style={{ display: 'none' }} className="desktop-nav">

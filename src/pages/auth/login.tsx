@@ -6,6 +6,7 @@ import ReCAPTCHA from 'react-google-recaptcha'
 import Image from 'next/image'
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState<string>('')
@@ -249,22 +250,23 @@ export default function LoginPage() {
     position: 'relative' 
   }
 
-  const passwordToggleStyle: React.CSSProperties = {
-    position: 'absolute',
-    right: 'clamp(0.8rem, 2vw, 1rem)',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-    color: '#6b7280',
-    minWidth: '44px',
-    minHeight: '44px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }
+const passwordToggleStyle: React.CSSProperties = {
+  position: 'absolute',
+  right: 'clamp(0.8rem, 2vw, 1rem)',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '32px',
+  height: '32px',
+  padding: 0,
+  lineHeight: 0
+}
+
 
   const termsLabelStyle: React.CSSProperties = { 
     textAlign: 'left' as const, 
@@ -455,7 +457,7 @@ export default function LoginPage() {
                 if (error) setError('')
               }} 
               required 
-              style={inputStyle(!!error)} 
+              style={{ ...inputStyle(!!error), paddingRight: '3rem' }} 
             />
             <button
               type="button"
