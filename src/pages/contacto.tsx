@@ -1,7 +1,7 @@
 import Layout from '@/components/Layout'
 import { useState } from 'react'
 
-export default function Contacto(props: any) {
+export default function Contacto() {
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -93,7 +93,7 @@ Saludos desde la web de Cultour`
   }
 
   return (
-    <Layout {...props}>
+    <Layout {}>
       <div style={{ 
         maxWidth: '1200px', 
         margin: '0 auto',
