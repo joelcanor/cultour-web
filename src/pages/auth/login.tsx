@@ -320,7 +320,7 @@ export default function LoginPage() {
           {/* ReCAPTCHA */}
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <ReCAPTCHA 
-              sitekey="6LeLOI4rAAAAAB2vTL1uVICM9uOW5vu7HGFkV6-1" 
+              sitekey="6Lc4R50rAAAAAFrQUU6brzmLaTACddpwr8dD_c5I" 
               onChange={(token) => setCaptchaToken(token || '')} 
             />
           </div>
