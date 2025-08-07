@@ -14,14 +14,14 @@ interface UsuarioData {
   foto_url?: string
   avatar_url?: string
   fecha_registro?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface AdminInfo {
   id: string
   nombre?: string
   foto_url?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface Stats {
