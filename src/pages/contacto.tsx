@@ -1,7 +1,14 @@
 import Layout from '@/components/Layout'
 import { useState, ChangeEvent, FormEvent } from 'react'
+import type { User } from '@supabase/supabase-js'
 
 export default function Contacto() {
+  // Props para Layout - página pública sin autenticación
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const user: User | null = null
+  const isAuthenticated = false
+  const handleLogout = () => {}
+  
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -93,7 +100,13 @@ Saludos desde la web de Cultour`
   }
 
   return (
-    <Layout>
+    <Layout 
+      user={user}
+      isAuthenticated={isAuthenticated}
+      showUserMenu={showUserMenu}
+      setShowUserMenu={setShowUserMenu}
+      handleLogout={handleLogout}
+    >
       <div style={{ 
         maxWidth: '1200px', 
         margin: '0 auto',
