@@ -93,7 +93,7 @@ Saludos desde la web de Cultour`
   }
 
   return (
-    <Layout {}>
+    <Layout>
       <div style={{ 
         maxWidth: '1200px', 
         margin: '0 auto',
