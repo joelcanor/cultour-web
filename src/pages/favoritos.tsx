@@ -1,41 +1,93 @@
 import Layout from '@/components/Layout'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, ChangeEvent, MouseEvent } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Image from 'next/image'
+import type { User } from '@supabase/supabase-js'
 
-export default function Favoritos(props) {
+// Definir los tipos
+interface Lugar {
+  id: string
+  nombre: string
+  descripcion: string
+  municipio: string
+  url_imagen: string
+}
+
+interface FavoritosProps {
+  user: User | null
+  isAuthenticated: boolean
+  showUserMenu: boolean
+  setShowUserMenu: (value: boolean) => void
+  handleLogout: () => void
+}
+
+// Tipos más específicos basados en la estructura de Supabase
+interface SupabaseLugar {
+  id: string
+  nombre: string
+  descripcion: string
+  municipio: string
+  url_imagen: string
+}
+
+interface SupabaseFavoritoResponse {
+  lugar_id: string
+  lugar: SupabaseLugar | null
+}
+
+export default function Favoritos(props: FavoritosProps) {
   const { user } = props
-  const [lugares, setLugares] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState('')
-  const [sortBy, setSortBy] = useState('nombre')
-  const [viewMode, setViewMode] = useState('grid') // 'grid' o 'list'
+  const [lugares, setLugares] = useState<Lugar[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [filtro, setFiltro] = useState<string>('')
+  const [sortBy, setSortBy] = useState<'nombre' | 'municipio'>('nombre')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const router = useRouter()
 
   useEffect(() => {
     if (!user) return
 
-    const fetchFavoritos = async () => {
+    const fetchFavoritos = async (): Promise<void> => {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('favoritos')
-        .select('lugar_id, lugar:lugares(id, nombre, descripcion, municipio, url_imagen)')
-        .eq('usuario_id', user.id)
+      
+      try {
+        const { data, error } = await supabase
+          .from('favoritos')
+          .select('lugar_id, lugar:lugares(id, nombre, descripcion, municipio, url_imagen)')
+          .eq('usuario_id', user.id)
 
-      if (error) {
-        console.error('Error al obtener favoritos:', error)
-      } else {
-        setLugares(data.map(fav => fav.lugar))
+        if (error) {
+          console.error('Error al obtener favoritos:', error)
+        } else if (data) {
+          // Tipado específico para la respuesta de Supabase
+          const favoritosData = data as SupabaseFavoritoResponse[]
+          const lugaresValidos = favoritosData
+            .map(item => item.lugar)
+            .filter((lugar): lugar is Lugar => 
+              lugar !== null && 
+              typeof lugar.id === 'string' && 
+              typeof lugar.nombre === 'string' &&
+              typeof lugar.descripcion === 'string' &&
+              typeof lugar.municipio === 'string' &&
+              typeof lugar.url_imagen === 'string'
+            )
+          
+          setLugares(lugaresValidos)
+        }
+      } catch (err) {
+        console.error('Error al cargar favoritos:', err)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     fetchFavoritos()
   }, [user])
 
-  const removeFavorito = async (lugarId) => {
+  const removeFavorito = async (lugarId: string): Promise<void> => {
+    if (!user) return
+    
     try {
       const { error } = await supabase
         .from('favoritos')
@@ -108,11 +160,11 @@ export default function Favoritos(props) {
               transition: 'all 0.3s ease',
               boxShadow: '0 4px 20px rgba(0,78,146,0.3)'
             }}
-            onMouseEnter={e => {
+            onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
               e.currentTarget.style.transform = 'translateY(-2px)'
               e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,78,146,0.4)'
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
               e.currentTarget.style.transform = 'translateY(0px)'
               e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,78,146,0.3)'
             }}
@@ -240,11 +292,11 @@ export default function Favoritos(props) {
                 transition: 'all 0.3s ease',
                 boxShadow: '0 4px 20px rgba(0,78,146,0.3)'
               }}
-              onMouseEnter={e => {
+              onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
                 e.currentTarget.style.transform = 'translateY(-2px)'
                 e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,78,146,0.4)'
               }}
-              onMouseLeave={e => {
+              onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
                 e.currentTarget.style.transform = 'translateY(0px)'
                 e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,78,146,0.3)'
               }}
@@ -273,7 +325,7 @@ export default function Favoritos(props) {
                     type="text"
                     placeholder="Buscar lugares..."
                     value={filtro}
-                    onChange={(e) => setFiltro(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setFiltro(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '0.8rem 1rem 0.8rem 2.5rem',
@@ -283,8 +335,8 @@ export default function Favoritos(props) {
                       outline: 'none',
                       transition: 'all 0.3s ease'
                     }}
-                    onFocus={e => e.currentTarget.style.borderColor = '#004e92'}
-                    onBlur={e => e.currentTarget.style.borderColor = '#e9ecef'}
+                    onFocus={(e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.style.borderColor = '#004e92'}
+                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.style.borderColor = '#e9ecef'}
                   />
                   <span style={{
                     position: 'absolute',
@@ -300,7 +352,7 @@ export default function Favoritos(props) {
 
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as 'nombre' | 'municipio')}
                   style={{
                     padding: '0.8rem 1rem',
                     border: '2px solid #e9ecef',
@@ -370,18 +422,18 @@ export default function Favoritos(props) {
                     position: 'relative',
                     display: viewMode === 'list' ? 'flex' : 'block'
                   }}
-                  onMouseEnter={e => {
+                  onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
                     e.currentTarget.style.transform = 'translateY(-8px)'
                     e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.15)'
                   }}
-                  onMouseLeave={e => {
+                  onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
                     e.currentTarget.style.transform = 'translateY(0px)'
                     e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)'
                   }}
                 >
                   {/* Botón de eliminar favorito */}
                   <button
-                    onClick={(e) => {
+                    onClick={(e: MouseEvent<HTMLButtonElement>) => {
                       e.stopPropagation()
                       removeFavorito(lugar.id)
                     }}
@@ -405,12 +457,12 @@ export default function Favoritos(props) {
                       opacity: 0.9,
                       backdropFilter: 'blur(10px)'
                     }}
-                    onMouseEnter={e => {
+                    onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
                       e.currentTarget.style.opacity = '1'
                       e.currentTarget.style.transform = 'scale(1.1)'
                       e.currentTarget.style.background = 'rgba(220, 53, 69, 1)'
                     }}
-                    onMouseLeave={e => {
+                    onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
                       e.currentTarget.style.opacity = '0.9'
                       e.currentTarget.style.transform = 'scale(1)'
                       e.currentTarget.style.background = 'rgba(220, 53, 69, 0.9)'
@@ -438,14 +490,13 @@ export default function Favoritos(props) {
                       <Image
                         src={lugar.url_imagen} 
                         alt={lugar.nombre} 
+                        fill
                         style={{ 
-                          width: '100%', 
-                          height: '100%', 
                           objectFit: 'cover',
                           transition: 'transform 0.3s ease'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1)'}
                       />
                       
                       {/* Badge de favorito */}
@@ -550,8 +601,8 @@ export default function Favoritos(props) {
                   No se encontraron resultados
                 </h3>
                 <p style={{ fontSize: '1rem' }}>
-  No hay lugares favoritos que coincidan con &quot;<strong>{filtro}</strong>&quot;
-</p>
+                  No hay lugares favoritos que coincidan con &quot;<strong>{filtro}</strong>&quot;
+                </p>
                 <button
                   onClick={() => setFiltro('')}
                   style={{
