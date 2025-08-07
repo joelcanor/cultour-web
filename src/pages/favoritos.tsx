@@ -22,7 +22,7 @@ interface FavoritosProps {
   handleLogout: () => void
 }
 
-// Tipos más específicos basados en la estructura de Supabase
+// Tipos más específicos basados en la estructura REAL de Supabase
 interface SupabaseLugar {
   id: string
   nombre: string
@@ -31,9 +31,10 @@ interface SupabaseLugar {
   url_imagen: string
 }
 
+// La respuesta real de Supabase puede ser diferente, vamos a manejar ambos casos
 interface SupabaseFavoritoResponse {
   lugar_id: string
-  lugar: SupabaseLugar | null
+  lugar: SupabaseLugar | SupabaseLugar[] | null
 }
 
 export default function Favoritos(props: FavoritosProps) {
@@ -60,18 +61,32 @@ export default function Favoritos(props: FavoritosProps) {
         if (error) {
           console.error('Error al obtener favoritos:', error)
         } else if (data) {
-          // Tipado específico para la respuesta de Supabase
-          const favoritosData = data as SupabaseFavoritoResponse[]
-          const lugaresValidos = favoritosData
-            .map(item => item.lugar)
-            .filter((lugar): lugar is Lugar => 
-              lugar !== null && 
-              typeof lugar.id === 'string' && 
-              typeof lugar.nombre === 'string' &&
-              typeof lugar.descripcion === 'string' &&
-              typeof lugar.municipio === 'string' &&
-              typeof lugar.url_imagen === 'string'
-            )
+          // Manejo seguro sin casting forzado
+          const lugaresValidos: Lugar[] = []
+          
+          data.forEach((item) => {
+            if (item && item.lugar) {
+              // Manejar tanto si lugar es un objeto como si es un array
+              const lugares = Array.isArray(item.lugar) ? item.lugar : [item.lugar]
+              
+              lugares.forEach((lugar) => {
+                if (lugar && 
+                    typeof lugar.id === 'string' && 
+                    typeof lugar.nombre === 'string' &&
+                    typeof lugar.descripcion === 'string' &&
+                    typeof lugar.municipio === 'string' &&
+                    typeof lugar.url_imagen === 'string') {
+                  lugaresValidos.push({
+                    id: lugar.id,
+                    nombre: lugar.nombre,
+                    descripcion: lugar.descripcion,
+                    municipio: lugar.municipio,
+                    url_imagen: lugar.url_imagen
+                  })
+                }
+              })
+            }
+          })
           
           setLugares(lugaresValidos)
         }
