@@ -31,12 +31,6 @@ interface SupabaseLugar {
   url_imagen: string
 }
 
-// La respuesta real de Supabase puede ser diferente, vamos a manejar ambos casos
-interface SupabaseFavoritoResponse {
-  lugar_id: string
-  lugar: SupabaseLugar | SupabaseLugar[] | null
-}
-
 export default function Favoritos(props: FavoritosProps) {
   const { user } = props
   const [lugares, setLugares] = useState<Lugar[]>([])
