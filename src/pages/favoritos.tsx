@@ -22,15 +22,6 @@ interface FavoritosProps {
   handleLogout: () => void
 }
 
-// Tipos más específicos basados en la estructura REAL de Supabase
-interface SupabaseLugar {
-  id: string
-  nombre: string
-  descripcion: string
-  municipio: string
-  url_imagen: string
-}
-
 export default function Favoritos(props: FavoritosProps) {
   const { user } = props
   const [lugares, setLugares] = useState<Lugar[]>([])
