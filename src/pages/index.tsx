@@ -126,7 +126,7 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito }: CarouselProps) 
             }}
           >
             <Image
-              src={place.url_imagen}
+              src={place.url_imagen.replace('yiaplotfopkyasrkhjhf', 'yiaplofsopkyasrkhjhf')}
               alt={place.nombre}
               width={280}
               height={200}
@@ -1304,7 +1304,7 @@ export default function Home() {
                         </div>
 
                         <Image
-                          src={place.url_imagen}
+                          src={place.url_imagen.replace('yiaplotfopkyasrkhjhf', 'yiaplofsopkyasrkhjhf')}
                           alt={place.nombre}
                           width={400}
                           height={220}
