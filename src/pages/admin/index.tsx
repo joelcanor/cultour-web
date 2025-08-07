@@ -32,6 +32,26 @@ interface Stats {
   visitasTotales: number
 }
 
+// Interface para los datos de lugares
+interface LugarData {
+  id: string
+  destacado?: boolean
+  [key: string]: unknown
+}
+
+// Interface para los datos raw de usuarios de la RPC
+interface UsuarioRaw {
+  id: string
+  email?: string
+  nombre?: string
+  telefono?: string
+  rol?: string
+  foto_url?: string
+  avatar_url?: string
+  fecha_registro?: string
+  [key: string]: unknown
+}
+
 export default function AdminDashboard() {
   const [usuarios, setUsuarios] = useState<UsuarioData[]>([])
   const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null)
@@ -56,78 +76,78 @@ export default function AdminDashboard() {
     target.src = '/logo.jpg'
   }
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      // Obtener información del admin actual
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        const { data: adminData } = await supabase
-          .from('perfil_usuario')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Obtener información del admin actual
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const { data: adminData } = await supabase
+            .from('perfil_usuario')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+          
+          setAdminInfo(adminData)
+        }
+
+        // Obtener usuarios usando la función RPC
+        const { data: usuariosData, error: usuariosError } = await supabase.rpc('obtener_todos_los_usuarios')
         
-        setAdminInfo(adminData)
+        if (usuariosError) {
+          console.error('Error al obtener usuarios:', usuariosError)
+        } else {
+          // Normalizar datos igual que en UsuariosAdmin
+          const usuariosNormalizados: UsuarioData[] = (usuariosData || []).map((u: UsuarioRaw) => ({
+            ...u,
+            rol: u.rol || 'usuario',
+            nombre: u.nombre || '',
+            telefono: u.telefono || '',
+            foto_url: u.avatar_url || u.foto_url || '',
+          }))
+          setUsuarios(usuariosNormalizados)
+          
+          // Obtener lugares
+          const { data: lugaresData, error: lugaresError } = await supabase
+            .from('lugares')
+            .select('*')
+          
+          if (lugaresError) {
+            console.error('Error al obtener lugares:', lugaresError)
+          }
+          
+          // Obtener visitas totales del sitio
+          const { data: visitasData, error: visitasError } = await supabase
+            .from('contador_visitas')
+            .select('total_visitas')
+            .eq('id', 1)
+            .single()
+
+          if (visitasError) {
+            console.error('Error al obtener visitas:', visitasError)
+          }
+
+          // Calcular estadísticas usando los datos ya normalizados
+          if (lugaresData) {
+            setStats({
+              totalUsuarios: usuariosNormalizados.length,
+              totalLugares: lugaresData.length,
+              usuariosActivos: usuariosNormalizados.filter((u: UsuarioData) => u.rol === 'usuario').length,
+              lugaresDestacados: lugaresData.filter((l: LugarData) => l.destacado === true).length,
+              visitasTotales: visitasData?.total_visitas || 0
+            })
+          }
+        }
+
+      } catch (error) {
+        console.error('Error general:', error)
+      } finally {
+        setLoading(false)
       }
-
-      // Obtener usuarios usando la función RPC
-      const { data: usuariosData, error: usuariosError } = await supabase.rpc('obtener_todos_los_usuarios')
-      
-      if (usuariosError) {
-        console.error('Error al obtener usuarios:', usuariosError)
-      } else {
-        // Normalizar datos igual que en UsuariosAdmin
-        const usuariosNormalizados: UsuarioData[] = (usuariosData || []).map((u: any) => ({
-          ...u,
-          rol: u.rol || 'usuario',
-          nombre: u.nombre || '',
-          telefono: u.telefono || '',
-          foto_url: u.avatar_url || u.foto_url || '',
-        }))
-        setUsuarios(usuariosNormalizados)
-        
-        // Obtener lugares
-        const { data: lugaresData, error: lugaresError } = await supabase
-          .from('lugares')
-          .select('*')
-        
-        if (lugaresError) {
-          console.error('Error al obtener lugares:', lugaresError)
-        }
-        
-        // Obtener visitas totales del sitio
-        const { data: visitasData, error: visitasError } = await supabase
-          .from('contador_visitas')
-          .select('total_visitas')
-          .eq('id', 1)
-          .single()
-
-        if (visitasError) {
-          console.error('Error al obtener visitas:', visitasError)
-        }
-
-        // Calcular estadísticas usando los datos ya normalizados
-        if (lugaresData) {
-          setStats({
-            totalUsuarios: usuariosNormalizados.length,
-            totalLugares: lugaresData.length,
-            usuariosActivos: usuariosNormalizados.filter((u: UsuarioData) => u.rol === 'usuario').length,
-            lugaresDestacados: lugaresData.filter((l: any) => l.destacado === true).length,
-            visitasTotales: visitasData?.total_visitas || 0
-          })
-        }
-      }
-
-    } catch (error) {
-      console.error('Error general:', error)
-    } finally {
-      setLoading(false)
     }
-  }
 
-  fetchData()
-}, [])
+    fetchData()
+  }, [])
 
   const cambiarRol = async (id: string, nuevoRol: string) => {
     const { error } = await supabase
