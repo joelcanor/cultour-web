@@ -28,13 +28,12 @@ interface CarouselProps {
   places: Lugar[]
   favoritos: string[]
   toggleFavorito: (lugarId: string, e?: MouseEvent<HTMLDivElement>) => Promise<void>
-  isDarkMode: boolean
 }
 
 const municipios: string[] = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito responsive
-const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }: CarouselProps) => {
+const InfiniteCarousel = ({ places, favoritos, toggleFavorito }: CarouselProps) => {
   const router = useRouter()
   const [isHovered, setIsHovered] = useState<boolean>(false)
   const [currentX, setCurrentX] = useState<number>(0)
@@ -103,118 +102,125 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }: Car
           transition: 'none'
         }}
       >
-        {duplicatedPlaces.map((place, index) => (
-          <div
-            key={`${place.id}-${index}`}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onClick={() => router.push(`/lugares/${place.id}`)}
-            style={{
-              minWidth: 'clamp(220px, 45vw, 280px)',
-              height: 'clamp(160px, 35vw, 200px)',
-              background: isDarkMode ? '#374151' : '#fff',
-              borderRadius: '1rem',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-              overflow: 'hidden',
-              cursor: 'pointer',
-              position: 'relative',
-              flexShrink: 0,
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-              transition: 'transform 0.3s ease',
-              zIndex: isHovered ? 10 : 1
-            }}
-          >
-            <Image
-              src={place.url_imagen}
-              alt={place.nombre}
-              width={280}
-              height={200}
+        {duplicatedPlaces.map((place, index) => {
+          // Construir la URL completa de la imagen desde el bucket de Supabase
+          const imageUrl = supabase.storage
+            .from('imagenes-lugares')
+            .getPublicUrl(place.url_imagen).data.publicUrl
+          
+          return (
+            <div
+              key={`${place.id}-${index}`}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onClick={() => router.push(`/lugares/${place.id}`)}
               style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
+                minWidth: 'clamp(220px, 45vw, 280px)',
+                height: 'clamp(160px, 35vw, 200px)',
+                background: '#fff',
+                borderRadius: '1rem',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                position: 'relative',
+                flexShrink: 0,
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                transition: 'transform 0.3s ease',
+                zIndex: isHovered ? 10 : 1
               }}
-              onError={handleImageError}
-            />
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-              padding: 'clamp(1rem, 3vw, 2rem) clamp(0.5rem, 2vw, 1rem) clamp(0.5rem, 2vw, 1rem)',
-              color: 'white'
-            }}>
-              {/* Botón de favorito */}
-              <div
-                onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
+            >
+              <Image
+                src={imageUrl}
+                alt={place.nombre}
+                width={280}
+                height={200}
                 style={{
-                  position: 'absolute',
-                  top: 'clamp(-2rem, -5vw, -3rem)',
-                  left: 'clamp(0.5rem, 2vw, 1rem)',
-                  fontSize: 'clamp(1.2rem, 4vw, 1.8rem)',
-                  cursor: 'pointer',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                  transition: 'all 0.3s ease',
-                  transform: 'scale(1)',
-                  zIndex: 20
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
                 }}
-                onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
-                  const target = e.currentTarget
-                  target.style.transform = 'scale(1.2)'
-                  target.style.filter = 'brightness(1.2)'
-                }}
-                onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
-                  const target = e.currentTarget
-                  target.style.transform = 'scale(1)'
-                  target.style.filter = 'brightness(1)'
-                }}
-              >
-                {favoritos.includes(place.id) ? (
-                  <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
-                ) : (
-                  <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
-                )}
-              </div>
-              
+                onError={handleImageError}
+              />
               <div style={{
                 position: 'absolute',
-                top: '0.5rem',
-                right: '0.5rem',
-                background: 'rgba(0,168,107,0.9)',
-                color: 'white',
-                padding: 'clamp(0.2rem, 1vw, 0.3rem) clamp(0.4rem, 1.5vw, 0.7rem)',
-                borderRadius: '0.5rem',
-                fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
-                fontWeight: 'bold'
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+                padding: 'clamp(1rem, 3vw, 2rem) clamp(0.5rem, 2vw, 1rem) clamp(0.5rem, 2vw, 1rem)',
+                color: 'white'
               }}>
-                {place.municipio}
+                {/* Botón de favorito */}
+                <div
+                  onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
+                  style={{
+                    position: 'absolute',
+                    top: 'clamp(-2rem, -5vw, -3rem)',
+                    left: 'clamp(0.5rem, 2vw, 1rem)',
+                    fontSize: 'clamp(1.2rem, 4vw, 1.8rem)',
+                    cursor: 'pointer',
+                    textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                    transition: 'all 0.3s ease',
+                    transform: 'scale(1)',
+                    zIndex: 20
+                  }}
+                  onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+                    const target = e.currentTarget
+                    target.style.transform = 'scale(1.2)'
+                    target.style.filter = 'brightness(1.2)'
+                  }}
+                  onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+                    const target = e.currentTarget
+                    target.style.transform = 'scale(1)'
+                    target.style.filter = 'brightness(1)'
+                  }}
+                >
+                  {favoritos.includes(place.id) ? (
+                    <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
+                  ) : (
+                    <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
+                  )}
+                </div>
+                
+                <div style={{
+                  position: 'absolute',
+                  top: '0.5rem',
+                  right: '0.5rem',
+                  background: 'rgba(0,168,107,0.9)',
+                  color: 'white',
+                  padding: 'clamp(0.2rem, 1vw, 0.3rem) clamp(0.4rem, 1.5vw, 0.7rem)',
+                  borderRadius: '0.5rem',
+                  fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
+                  fontWeight: 'bold'
+                }}>
+                  {place.municipio}
+                </div>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.7)'
+                }}>
+                  {place.nombre}
+                </h3>
+                <p style={{
+                  margin: '0.3rem 0 0 0',
+                  fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+                  opacity: '0.9',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+                }}>
+                  {place.descripcion}
+                </p>
               </div>
-              <h3 style={{
-                margin: 0,
-                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-                fontWeight: 'bold',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.7)'
-              }}>
-                {place.nombre}
-              </h3>
-              <p style={{
-                margin: '0.3rem 0 0 0',
-                fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-                opacity: '0.9',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
-              }}>
-                {place.descripcion}
-              </p>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -233,21 +239,22 @@ export default function Home() {
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
   const [totalVisitas, setTotalVisitas] = useState<number>(0)
+  const [showCookieModal, setShowCookieModal] = useState<boolean>(false)
 
-  // Dark mode detection
+  // Verificar si se deben mostrar las cookies al cargar la página
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      setIsDarkMode(darkModeMediaQuery.matches)
-      
-      const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches)
-      darkModeMediaQuery.addEventListener('change', handler)
-      
-      return () => darkModeMediaQuery.removeEventListener('change', handler)
+    const cookiesAccepted = localStorage.getItem('cookies-accepted')
+    if (!cookiesAccepted) {
+      setShowCookieModal(true)
     }
   }, [])
+
+  // Función para aceptar cookies
+  const acceptCookies = () => {
+    localStorage.setItem('cookies-accepted', 'true')
+    setShowCookieModal(false)
+  }
 
   // Función para cargar imagen de perfil del usuario
   const fetchUserProfileImage = async (userId: string): Promise<void> => {
@@ -264,7 +271,10 @@ export default function Home() {
       }
 
       if (data?.foto_url) {
-        setUserProfileImage(data.foto_url)
+        const imageUrl = supabase.storage
+          .from('imagenes-perfil')
+          .getPublicUrl(data.foto_url).data.publicUrl
+        setUserProfileImage(imageUrl)
       } else {
         setUserProfileImage(null)
       }
@@ -530,9 +540,7 @@ export default function Home() {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        background: isDarkMode 
-          ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
-          : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
+        background: 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
         padding: '1rem'
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -558,6 +566,72 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Modal de Cookies */}
+      {showCookieModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '1rem',
+            padding: '2rem',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{
+              fontSize: '3rem',
+              marginBottom: '1rem'
+            }}>
+              🍪
+            </div>
+            <h3 style={{
+              color: '#004e92',
+              margin: '0 0 1rem 0',
+              fontSize: '1.4rem'
+            }}>
+              Usamos Cookies
+            </h3>
+            <p style={{
+              color: '#666',
+              margin: '0 0 1.5rem 0',
+              lineHeight: '1.5'
+            }}>
+              Este sitio utiliza cookies para mejorar tu experiencia de navegación y ofrecerte contenido personalizado.
+            </p>
+            <button
+              onClick={acceptCookies}
+              style={{
+                background: 'linear-gradient(135deg, #004e92, #00a86b)',
+                color: 'white',
+                border: 'none',
+                padding: '0.8rem 1.5rem',
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              Aceptar Cookies
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header responsive con menú hamburguesa */}
       <header style={{ 
         background: 'linear-gradient(135deg, #004e92, #00a86b)', 
@@ -604,28 +678,6 @@ export default function Home() {
             </h2>
           </div>
 
-          {/* Toggle de modo oscuro */}
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              border: 'none',
-              color: 'white',
-              padding: 'clamp(0.4rem, 1vw, 0.5rem)',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
-
           {/* Desktop Navigation */}
           <nav style={{ display: 'none' }} className="desktop-nav">
             <ul style={{
@@ -665,7 +717,7 @@ export default function Home() {
                 onClick={() => router.push('/auth/login')}
                 style={{ 
                   backgroundColor: 'white', 
-                  color: isDarkMode ? '#60a5fa' : '#004e92',
+                  color: '#004e92',
                   padding: 'clamp(0.4rem, 1.5vw, 0.5rem) clamp(0.8rem, 2.5vw, 1rem)', 
                   border: 'none', 
                   borderRadius: '0.5rem', 
@@ -702,8 +754,8 @@ export default function Home() {
                     height: 'clamp(30px, 6vw, 35px)', 
                     borderRadius: '50%', 
                     background: 'white', 
-                    color: isDarkMode ? '#f9fafb' : '#333',
-                    border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
+                    color: '#333',
+                    border: '2px solid #ddd',
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
@@ -765,7 +817,7 @@ export default function Home() {
                     top: '100%', 
                     right: 0, 
                     marginTop: '0.5rem',
-                    background: isDarkMode ? '#374151' : 'white',
+                    background: 'white',
                     borderRadius: '0.8rem', 
                     boxShadow: '0 8px 30px rgba(0,0,0,0.15)', 
                     minWidth: 'clamp(180px, 40vw, 200px)', 
@@ -775,7 +827,7 @@ export default function Home() {
                     <div style={{ 
                       padding: '1rem', 
                       borderBottom: '1px solid #eee', 
-                      color: isDarkMode ? '#f9fafb' : '#333', 
+                      color: '#333', 
                     }}>
                       <div style={{ 
                         fontWeight: 'bold', 
@@ -802,7 +854,7 @@ export default function Home() {
                         padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
                         border: 'none', 
                         background: 'transparent', 
-                        color: isDarkMode ? '#f9fafb' : '#333', 
+                        color: '#333', 
                         textAlign: 'left', 
                         cursor: 'pointer',
                         fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
@@ -824,7 +876,7 @@ export default function Home() {
                         padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
                         border: 'none', 
                         background: 'transparent', 
-                        color: isDarkMode ? '#f9fafb' : '#333',
+                        color: '#333',
                         textAlign: 'left', 
                         cursor: 'pointer',
                         fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
@@ -846,7 +898,7 @@ export default function Home() {
                           padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
                           border: 'none', 
                           background: 'transparent', 
-                          color: isDarkMode ? '#f9fafb' : '#333',
+                          color: '#333',
                           textAlign: 'left', 
                           cursor: 'pointer',
                           fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
@@ -991,9 +1043,7 @@ export default function Home() {
       <main style={{ 
         flex: 1,
         padding: '1.5rem 1rem', 
-        background: isDarkMode 
-          ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
-          : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
+        background: 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
         minHeight: '100vh'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -1009,7 +1059,7 @@ export default function Home() {
               Descubre la Sierra Gorda
             </h1>
             <div style={{
-              background: isDarkMode ? 'rgba(45,45,45,0.9)' : 'rgba(255,255,255,0.9)',
+              background: 'rgba(255,255,255,0.9)',
               padding: '1rem 1.5rem',
               borderRadius: '1rem',
               marginBottom: '1rem',
@@ -1020,7 +1070,7 @@ export default function Home() {
               flexWrap: 'wrap',
               gap: '1rem'
             }}>
-              <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: isDarkMode ? '#60a5fa' : '#004e92' }}>
+              <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: '#004e92' }}>
                 {user ? (
                   <span>👋 ¡Hola, <strong>{user.name || user.email?.split('@')[0] || 'Usuario'}!</strong></span>
                 ) : (
@@ -1029,7 +1079,7 @@ export default function Home() {
               </div>
               <div style={{ 
                 fontSize: 'clamp(0.9rem, 2vw, 1rem)', 
-                color: isDarkMode ? '#34d399' : '#00a86b',
+                color: '#00a86b',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'
@@ -1040,7 +1090,7 @@ export default function Home() {
             </div>
             <h2 style={{ 
               fontSize: '1.6rem', 
-              color: isDarkMode ? '#34d399' : '#00a86b', 
+              color: '#00a86b', 
               margin: '0 0 1rem 0',
               fontWeight: '300',
               letterSpacing: '1px'
@@ -1049,7 +1099,7 @@ export default function Home() {
             </h2>
             <p style={{ 
               fontSize: '1.1rem', 
-              color: isDarkMode ? '#d1d5db' : '#555',
+              color: '#555',
               maxWidth: '600px',
               margin: '0 auto',
               lineHeight: '1.6'
@@ -1073,13 +1123,13 @@ export default function Home() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ 
-                background: isDarkMode ? '#374151' : 'white',
-                color: isDarkMode ? '#f9fafb' : '#333',
+                background: 'white',
+                color: '#333',
                 padding: '1rem 1.2rem', 
                 width: '90%',
                 maxWidth: '400px',
                 borderRadius: '2rem',
-                border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
+                border: '2px solid #ddd',
                 fontSize: '1rem',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
                 transition: 'all 0.3s ease'
@@ -1089,7 +1139,7 @@ export default function Home() {
                 e.target.style.boxShadow = '0 4px 20px rgba(0,78,146,0.2)'
               }}
               onBlur={e => {
-                e.target.style.borderColor = isDarkMode ? '#4b5563' : '#ddd'
+                e.target.style.borderColor = '#ddd'
                 e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)'
               }}
             />
@@ -1101,10 +1151,10 @@ export default function Home() {
                 maxWidth: '300px',
                 padding: '0.8rem 1.2rem', 
                 borderRadius: '1rem',
-                border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
+                border: '2px solid #ddd',
                 fontSize: '1rem',
-                background: isDarkMode ? '#374151' : 'white',
-                color: isDarkMode ? '#f9fafb' : '#333',
+                background: 'white',
+                color: '#333',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                 cursor: 'pointer'
               }}
@@ -1142,7 +1192,7 @@ export default function Home() {
                 <div>
                   <h2 style={{ 
                     fontSize: '2rem', 
-                    color: isDarkMode ? '#60a5fa' : '#004e92',
+                    color: '#004e92',
                     margin: '0 0 1.5rem 0',
                     fontWeight: 'bold',
                     textAlign: 'center'
@@ -1153,7 +1203,6 @@ export default function Home() {
                     places={firstRowPlaces} 
                     favoritos={favoritos} 
                     toggleFavorito={toggleFavorito} 
-                    isDarkMode={isDarkMode} 
                   />
                 </div>
               )}
@@ -1162,7 +1211,7 @@ export default function Home() {
                 <div>
                   <h2 style={{ 
                     fontSize: '2rem', 
-                    color: isDarkMode ? '#34d399' : '#00a86b', 
+                    color: '#00a86b', 
                     margin: '2rem 0 1.5rem 0',
                     fontWeight: 'bold',
                     textAlign: 'center'
@@ -1173,7 +1222,6 @@ export default function Home() {
                     places={secondRowPlaces} 
                     favoritos={favoritos} 
                     toggleFavorito={toggleFavorito} 
-                    isDarkMode={isDarkMode} 
                   />
                 </div>
               )}
@@ -1191,9 +1239,9 @@ export default function Home() {
                 <h2
                   style={{
                     fontSize: '1.8rem',
-                    color: isDarkMode ? '#60a5fa' : '#004e92',
+                    color: '#004e92',
                     marginBottom: '1rem',
-                    borderBottom: isDarkMode ? '3px solid #34d399' : '3px solid #00a86b',
+                    borderBottom: '3px solid #00a86b',
                     paddingBottom: '0.5rem'
                   }}
                 >
@@ -1204,111 +1252,118 @@ export default function Home() {
                   gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                   gap: '2rem'
                 }}>
-                  {lugaresMunicipio.map(place => (
-                    <div
-                      key={place.id}
-                      onClick={() => router.push(`/lugares/${place.id}`)}
-                      style={{
-                        background: isDarkMode ? '#374151' : '#fff',
-                        borderRadius: '1.5rem',
-                        boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        transition: 'transform 0.3s ease'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.transform = 'scale(1.05) translateY(-5px)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'scale(1) translateY(0px)'
-                      }}
-                    >
-                      <div style={{ position: 'relative', overflow: 'hidden' }}>
-                        {/* Botón de favorito */}
-                        <div
-                          onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
-                          style={{
+                  {lugaresMunicipio.map(place => {
+                    // Construir la URL completa de la imagen desde el bucket de Supabase
+                    const imageUrl = supabase.storage
+                      .from('imagenes-lugares')
+                      .getPublicUrl(place.url_imagen).data.publicUrl
+                    
+                    return (
+                      <div
+                        key={place.id}
+                        onClick={() => router.push(`/lugares/${place.id}`)}
+                        style={{
+                          background: '#fff',
+                          borderRadius: '1.5rem',
+                          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          transition: 'transform 0.3s ease'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'scale(1.05) translateY(-5px)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'scale(1) translateY(0px)'
+                        }}
+                      >
+                        <div style={{ position: 'relative', overflow: 'hidden' }}>
+                          {/* Botón de favorito */}
+                          <div
+                            onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
+                            style={{
+                              position: 'absolute',
+                              top: '1rem',
+                              left: '1rem',
+                              fontSize: '2rem',
+                              cursor: 'pointer',
+                              textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                              transition: 'all 0.3s ease',
+                              transform: 'scale(1)',
+                              zIndex: 20,
+                              background: 'rgba(255,255,255,0.2)',
+                              borderRadius: '50%',
+                              width: '45px',
+                              height: '45px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backdropFilter: 'blur(10px)'
+                            }}
+                            onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+                              e.currentTarget.style.transform = 'scale(1.15)'
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
+                            }}
+                            onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+                              e.currentTarget.style.transform = 'scale(1)'
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+                            }}
+                          >
+                            {favoritos.includes(place.id) ? (
+                              <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
+                            ) : (
+                              <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
+                            )}
+                          </div>
+
+                          <Image
+                            src={imageUrl}
+                            alt={place.nombre}
+                            width={400}
+                            height={220}
+                            style={{
+                              width: '100%',
+                              height: '220px',
+                              objectFit: 'cover',
+                              transition: 'transform 0.3s ease'
+                            }}
+                            onError={handleImageError}
+                          />
+                          <div style={{
                             position: 'absolute',
                             top: '1rem',
-                            left: '1rem',
-                            fontSize: '2rem',
-                            cursor: 'pointer',
-                            textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                            transition: 'all 0.3s ease',
-                            transform: 'scale(1)',
-                            zIndex: 20,
-                            background: 'rgba(255,255,255,0.2)',
-                            borderRadius: '50%',
-                            width: '45px',
-                            height: '45px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backdropFilter: 'blur(10px)'
-                          }}
-                          onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
-                            e.currentTarget.style.transform = 'scale(1.15)'
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
-                          }}
-                          onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
-                            e.currentTarget.style.transform = 'scale(1)'
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
-                          }}
-                        >
-                          {favoritos.includes(place.id) ? (
-                            <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
-                          ) : (
-                            <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
-                          )}
+                            right: '1rem',
+                            background: 'rgba(0,78,146,0.8)',
+                            color: 'white',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '1rem',
+                            fontSize: '0.9rem',
+                            fontWeight: '500'
+                          }}>
+                            {place.municipio}
+                          </div>
                         </div>
-
-                        <Image
-                          src={place.url_imagen}
-                          alt={place.nombre}
-                          width={400}
-                          height={220}
-                          style={{
-                            width: '100%',
-                            height: '220px',
-                            objectFit: 'cover',
-                            transition: 'transform 0.3s ease'
-                          }}
-                          onError={handleImageError}
-                        />
-                        <div style={{
-                          position: 'absolute',
-                          top: '1rem',
-                          right: '1rem',
-                          background: 'rgba(0,78,146,0.8)',
-                          color: 'white',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '1rem',
-                          fontSize: '0.9rem',
-                          fontWeight: '500'
-                        }}>
-                          {place.municipio}
+                        <div style={{ padding: '1.5rem 2rem' }}>
+                          <h3 style={{
+                            color: '#004e92',
+                            margin: '0 0 0.5rem 0',
+                            fontSize: '1.4rem',
+                            fontWeight: 'bold'
+                          }}>
+                            {place.nombre}
+                          </h3>
+                          <p style={{
+                            color: '#666',
+                            margin: 0,
+                            fontSize: '1rem',
+                            lineHeight: '1.5'
+                          }}>
+                            {place.descripcion}
+                          </p>
                         </div>
                       </div>
-                      <div style={{ padding: '1.5rem 2rem' }}>
-                        <h3 style={{
-                          color: isDarkMode ? '#60a5fa' : '#004e92',
-                          margin: '0 0 0.5rem 0',
-                          fontSize: '1.4rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {place.nombre}
-                        </h3>
-                        <p style={{
-                          color: isDarkMode ? '#d1d5db' : '#666',
-                          margin: 0,
-                          fontSize: '1rem',
-                          lineHeight: '1.5'
-                        }}>
-                          {place.descripcion}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </section>
             )
@@ -1319,7 +1374,7 @@ export default function Home() {
             <div style={{
               textAlign: 'center',
               padding: '4rem 2rem',
-              color: isDarkMode ? '#d1d5db' : '#666'
+              color: '#666'
             }}>
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
                 No se encontraron lugares
@@ -1336,7 +1391,7 @@ export default function Home() {
             <div style={{
               textAlign: 'center',
               padding: '4rem 2rem',
-              color: isDarkMode ? '#d1d5db' : '#666'
+              color: '#666'
             }}>
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
                 No se encontraron lugares que coincidan con tu búsqueda
