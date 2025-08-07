@@ -114,7 +114,7 @@ export default function Recomendaciones(props: RecomendacionesProps) {
         }}
           onClick={() => window.location.href = `/lugares/${lugar.id}`}>
           <Image 
-            src={lugar.url_imagen.replace('yiaplotfopkyasrkhjhf', 'yiaplofsopkyasrkhjhf')}
+            src={lugar.url_imagen.replace('yiaplotfopkyasrkhjhf', 'yiaplofsopkyasrkhjhf').replace('//', '/')}
             alt={lugar.nombre} 
             width={300}
             height={200}
