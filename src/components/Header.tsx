@@ -97,9 +97,10 @@ export default function Header({
               justifyContent: 'center',
             }}>
               <Image 
-                src="logo.jpg" 
-                alt="Logo" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+  src="/logo.jpg" 
+  alt="Logo" 
+  width={45}
+  height={45}
               />
             </div>
             <h2 style={{ 
@@ -196,20 +197,21 @@ export default function Header({
                   }}>
                     {/* ✅ Mostrar imagen de perfil o emoji por defecto */}
                     {userProfileImage ? (
-                      <Image
-                        src={`${userProfileImage}?t=${Date.now()}`} 
-                        alt="Perfil" 
-                        style={{ 
-                          width: '100%', 
-                          height: '100%', 
-                          objectFit: 'cover',
-                          borderRadius: '50%'
-                        }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                          ((e.target as HTMLImageElement).nextSibling as HTMLElement).style.display = 'flex'
-                        }}
-                      />
+<Image
+  src={`${userProfileImage}?t=${Date.now()}`} 
+  alt="Perfil" 
+  width={35}
+  height={35}
+  style={{ 
+    objectFit: 'cover',
+    borderRadius: '50%' 
+  }}
+  onError={(e) => {
+    (e.target as HTMLImageElement).style.display = 'none';
+    ((e.target as HTMLImageElement).nextSibling as HTMLElement).style.display = 'flex';
+  }}
+/>
+
                     ) : null}
                     <div style={{ 
                       display: userProfileImage ? 'none' : 'flex',

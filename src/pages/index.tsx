@@ -250,32 +250,43 @@ export default function Home() {
   }
 
   // Función para cargar imagen de perfil del usuario
-  const fetchUserProfileImage = async (userId: string): Promise<void> => {
-    try {
-      const { data, error } = await supabase
-        .from('perfil_usuario')
-        .select('foto_url')
-        .eq('id', userId)
-        .single()
+const fetchUserProfileImage = async (userId: string): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('perfil_usuario')
+      .select('foto_url')
+      .eq('id', userId)
+      .single()
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile image:', error)
-        return
-      }
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching profile image:', error)
+      return
+    }
 
-      if (data?.foto_url) {
-        const imageUrl = supabase.storage
+    if (data?.foto_url) {
+      // Verificar si foto_url ya es una URL completa o solo el path
+      let imageUrl: string
+      
+      if (data.foto_url.startsWith('http')) {
+        // Si ya es una URL completa, usarla directamente
+        imageUrl = data.foto_url
+      } else {
+        // Si es solo el path, construir la URL completa
+        imageUrl = supabase.storage
           .from('imagenes-perfil')
           .getPublicUrl(data.foto_url).data.publicUrl
-        setUserProfileImage(imageUrl)
-      } else {
-        setUserProfileImage(null)
       }
-    } catch (err) {
-      console.error('Error fetching profile image:', err)
+      
+      console.log('Image URL construida:', imageUrl) // Para debugging
+      setUserProfileImage(imageUrl)
+    } else {
       setUserProfileImage(null)
     }
+  } catch (err) {
+    console.error('Error fetching profile image:', err)
+    setUserProfileImage(null)
   }
+}
 
   // Función para verificar si el usuario es administrador
   const checkAdminRole = async (userId: string): Promise<boolean> => {
@@ -653,13 +664,14 @@ export default function Home() {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Image
-                src="/logo.jpg" 
-                alt="Logo" 
-                width={50}
-                height={50}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+             <Image 
+  src="/logo.jpg" 
+  alt="Logo"
+  width={45}
+  height={45}
+  style={{ objectFit: 'cover' }}
+/>
+
             </div>
             <h2 style={{ 
               margin: 0, 
@@ -754,28 +766,29 @@ export default function Home() {
                     justifyContent: 'center',
                     overflow: 'hidden'
                   }}>
-                    {userProfileImage ? (
-                      <Image
-                        src={`${userProfileImage}?t=${Date.now()}`} 
-                        alt="Perfil" 
-                        width={35}
-                        height={35}
-                        style={{ 
-                          width: '100%', 
-                          height: '100%', 
-                          objectFit: 'cover',
-                          borderRadius: '50%'
-                        }}
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                          const nextSibling = target.nextSibling as HTMLElement
-                          if (nextSibling) {
-                            nextSibling.style.display = 'flex'
-                          }
-                        }}
-                      />
-                    ) : null}
+{userProfileImage ? (
+  <Image
+    src={userProfileImage} 
+    alt="Perfil" 
+    width={35}
+    height={35}
+    style={{ 
+      objectFit: 'cover',
+      borderRadius: '50%'
+    }}
+    onError={(e) => {
+      console.error('Error loading image:', userProfileImage) // Para debugging
+      const img = e.target as HTMLImageElement
+      img.style.display = 'none'
+      const nextElement = img.nextSibling as HTMLElement
+      if (nextElement) {
+        nextElement.style.display = 'flex'
+      }
+      // Opcional: limpiar la imagen problemática
+      setUserProfileImage(null)
+    }}
+  />
+) : null}
                     <div style={{ 
                       display: userProfileImage ? 'none' : 'flex',
                       alignItems: 'center',
