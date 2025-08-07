@@ -1,27 +1,59 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, MouseEvent, TouchEvent } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
 
-const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
+// Tipos TypeScript
+interface Lugar {
+  id: string
+  nombre: string
+  descripcion: string
+  municipio: string
+  url_imagen: string
+  destacado: boolean
+}
+
+interface User {
+  id: string
+  email?: string
+  name?: string
+}
+
+interface NavItem {
+  name: string
+  href: string
+}
+
+interface CarouselProps {
+  places: Lugar[]
+  favoritos: string[]
+  toggleFavorito: (lugarId: string, e?: MouseEvent<HTMLDivElement>) => Promise<void>
+  isDarkMode: boolean
+}
+
+interface ImageErrorEvent extends Event {
+  target: HTMLImageElement & EventTarget
+}
+
+const municipios: string[] = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
 // Componente de carrusel infinito responsive
-const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => {
+const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }: CarouselProps) => {
   const router = useRouter()
-  const [isHovered, setIsHovered] = useState(false)
-  const [currentX, setCurrentX] = useState(0)
-  const carouselRef = useRef(null)
-  const animationRef = useRef(null)
+  const [isHovered, setIsHovered] = useState<boolean>(false)
+  const [currentX, setCurrentX] = useState<number>(0)
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const animationRef = useRef<number | null>(null)
   
   // Crear múltiples copias para efecto infinito real
-  const itemWidth = window.innerWidth < 768 ? 250 : 300 // Responsive width
-  const duplicatedPlaces = [...places, ...places, ...places, ...places]
+  const itemWidth: number = typeof window !== 'undefined' && window.innerWidth < 768 ? 250 : 300
+  const duplicatedPlaces: Lugar[] = [...places, ...places, ...places, ...places]
   
   useEffect(() => {
     const animate = () => {
       if (!isHovered) {
         setCurrentX(prev => {
-          const newX = prev - 1.5 // Velocidad ajustada para móviles
+          const newX = prev - 1.5
           const resetPoint = -itemWidth * places.length
           
           if (newX <= resetPoint) {
@@ -41,6 +73,22 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => 
       }
     }
   }, [isHovered, places.length, itemWidth])
+
+  const handleImageError = (e: ImageErrorEvent): void => {
+    const target = e.target as HTMLImageElement
+    target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
+    target.style.display = 'flex'
+    target.style.alignItems = 'center'
+    target.style.justifyContent = 'center'
+    target.style.color = 'white'
+    target.style.fontSize = 'clamp(1rem, 3vw, 1.2rem)'
+    target.innerHTML = '📸'
+  }
+
+  const handleTouchStart = (): void => setIsHovered(true)
+  const handleTouchEnd = (): void => setIsHovered(false)
+  const handleMouseEnter = (): void => setIsHovered(true)
+  const handleMouseLeave = (): void => setIsHovered(false)
   
   return (
     <div 
@@ -62,10 +110,10 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => 
         {duplicatedPlaces.map((place, index) => (
           <div
             key={`${place.id}-${index}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onTouchStart={() => setIsHovered(true)}
-            onTouchEnd={() => setIsHovered(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             onClick={() => router.push(`/lugares/${place.id}`)}
             style={{
               minWidth: 'clamp(220px, 45vw, 280px)',
@@ -85,20 +133,14 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => 
             <Image
               src={place.url_imagen}
               alt={place.nombre}
+              width={280}
+              height={200}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover'
               }}
-              onError={(e) => {
-                e.target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
-                e.target.style.display = 'flex'
-                e.target.style.alignItems = 'center'
-                e.target.style.justifyContent = 'center'
-                e.target.style.color = 'white'
-                e.target.style.fontSize = 'clamp(1rem, 3vw, 1.2rem)'
-                e.target.innerHTML = '📸'
-              }}
+              onError={handleImageError}
             />
             <div style={{
               position: 'absolute',
@@ -111,7 +153,7 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => 
             }}>
               {/* Botón de favorito */}
               <div
-                onClick={(e) => toggleFavorito(place.id, e)}
+                onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
                 style={{
                   position: 'absolute',
                   top: 'clamp(-2rem, -5vw, -3rem)',
@@ -123,13 +165,15 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => 
                   transform: 'scale(1)',
                   zIndex: 20
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.2)'
-                  e.currentTarget.style.filter = 'brightness(1.2)'
+                onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+                  const target = e.currentTarget
+                  target.style.transform = 'scale(1.2)'
+                  target.style.filter = 'brightness(1.2)'
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)'
-                  e.currentTarget.style.filter = 'brightness(1)'
+                onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+                  const target = e.currentTarget
+                  target.style.transform = 'scale(1)'
+                  target.style.filter = 'brightness(1)'
                 }}
               >
                 {favoritos.includes(place.id) ? (
@@ -182,36 +226,35 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }) => 
 
 export default function Home() {
   const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [selectedMunicipio, setSelectedMunicipio] = useState('Todos')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [places, setPlaces] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [favoritos, setFavoritos] = useState([])
-  const [userProfileImage, setUserProfileImage] = useState(null)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [search, setSearch] = useState<string>('')
+  const [selectedMunicipio, setSelectedMunicipio] = useState<string>('Todos')
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [showUserMenu, setShowUserMenu] = useState<boolean>(false)
+  const [places, setPlaces] = useState<Lugar[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [favoritos, setFavoritos] = useState<string[]>([])
+  const [userProfileImage, setUserProfileImage] = useState<string | null>(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
+  const [isAdmin, setIsAdmin] = useState<boolean>(false)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
+  const [totalVisitas, setTotalVisitas] = useState<number>(0)
 
-  const [totalVisitas, setTotalVisitas] = useState(0)
-
+  // Dark mode detection
   useEffect(() => {
-  const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  setIsDarkMode(darkModeMediaQuery.matches)
-  
-  const handler = (e) => setIsDarkMode(e.matches)
-  darkModeMediaQuery.addEventListener('change', handler)
-  
-  return () => darkModeMediaQuery.removeEventListener('change', handler)
-}, [])
+    if (typeof window !== 'undefined') {
+      const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      setIsDarkMode(darkModeMediaQuery.matches)
+      
+      const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches)
+      darkModeMediaQuery.addEventListener('change', handler)
+      
+      return () => darkModeMediaQuery.removeEventListener('change', handler)
+    }
+  }, [])
 
-
-
-
-  // ✅ Función para cargar imagen de perfil del usuario
-  const fetchUserProfileImage = async (userId) => {
+  // Función para cargar imagen de perfil del usuario
+  const fetchUserProfileImage = async (userId: string): Promise<void> => {
     try {
       const { data, error } = await supabase
         .from('perfil_usuario')
@@ -235,9 +278,180 @@ export default function Home() {
     }
   }
 
+  // Función para verificar si el usuario es administrador
+  const checkAdminRole = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('perfil_usuario')
+        .select('rol')
+        .eq('id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking admin role:', error)
+        return false
+      }
+
+      return data?.rol === 'admin'
+    } catch (err) {
+      console.error('Error checking admin role:', err)
+      return false
+    }
+  }
+
+  // Función para agregar/quitar favoritos
+  const toggleFavorito = async (lugarId: string, e?: MouseEvent<HTMLDivElement>): Promise<void> => {
+    if (e) {
+      e.stopPropagation()
+    }
+    
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    const yaEsta = favoritos.includes(lugarId)
+    
+    try {
+      if (yaEsta) {
+        const { error } = await supabase
+          .from('favoritos')
+          .delete()
+          .eq('usuario_id', user.id)
+          .eq('lugar_id', lugarId)
+        
+        if (error) {
+          console.error('Error al quitar favorito:', error)
+          return
+        }
+      } else {
+        const { error } = await supabase
+          .from('favoritos')
+          .insert({ 
+            usuario_id: user.id, 
+            lugar_id: lugarId 
+          })
+        
+        if (error) {
+          console.error('Error al agregar favorito:', error)
+          return
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('favoritos')
+        .select('lugar_id')
+        .eq('usuario_id', user.id)
+      
+      if (error) {
+        console.error('Error al actualizar favoritos:', error)
+      } else {
+        setFavoritos(data ? data.map(f => f.lugar_id) : [])
+      }
+    } catch (error) {
+      console.error('Error en toggleFavorito:', error)
+    }
+  }
+
+  // Cargar lugares desde Supabase
+  useEffect(() => {
+    const fetchPlaces = async (): Promise<void> => {
+      try {
+        setIsLoading(true)
+        const { data, error } = await supabase
+          .from('lugares')
+          .select('id, nombre, descripcion, municipio, url_imagen, destacado')
+
+        if (error) {
+          console.error('Error al obtener lugares:', error)
+          console.error('Detalles del error:', error.message)
+        } else {
+          console.log('Datos obtenidos:', data)
+          setPlaces(data || [])
+        }
+      } catch (error) {
+        console.error('Error al conectar con Supabase:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPlaces()
+  }, [])
+
+  // Verificar autenticación y suscripción
+  useEffect(() => {
+    let subscription: { unsubscribe: () => void } | undefined
+
+    const checkAuth = async (): Promise<void> => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setIsAuthenticated(true)
+        setUser(session.user as User)
+        fetchUserProfileImage(session.user.id)
+        const adminStatus = await checkAdminRole(session.user.id)
+        setIsAdmin(adminStatus)
+      }
+
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setIsAuthenticated(!!session?.user)
+        setUser(session?.user as User ?? null)
+
+        if (session?.user) {
+          fetchUserProfileImage(session.user.id)
+          const adminStatus = await checkAdminRole(session.user.id)
+          setIsAdmin(adminStatus)
+        } else {
+          setUserProfileImage(null)
+          setIsAdmin(false)
+        }
+      })
+
+      subscription = data.subscription
+    }
+
+    checkAuth()
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [])
+
+  // Contador de visitas
+  useEffect(() => {
+    const fetchVisitas = async (): Promise<void> => {
+      try {
+        const { data, error } = await supabase
+          .from('contador_visitas')
+          .select('total_visitas')
+          .eq('id', 1)
+          .single()
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching visits:', error)
+          return
+        }
+
+        const visitasActuales = data?.total_visitas || 0
+        setTotalVisitas(visitasActuales + 1)
+
+        await supabase
+          .from('contador_visitas')
+          .upsert({
+            id: 1,
+            total_visitas: visitasActuales + 1
+          })
+      } catch (err) {
+        console.error('Error with visit counter:', err)
+      }
+    }
+
+    fetchVisitas()
+  }, [])
+
   // Cargar favoritos del usuario
   useEffect(() => {
-    const fetchFavoritos = async () => {
+    const fetchFavoritos = async (): Promise<void> => {
       if (!user) {
         setFavoritos([])
         return
@@ -262,210 +476,7 @@ export default function Home() {
     fetchFavoritos()
   }, [user])
 
-  // ✅ Función para verificar si el usuario es administrador
-const checkAdminRole = async (userId) => {
-  try {
-    const { data, error } = await supabase
-      .from('perfil_usuario')
-      .select('rol')
-      .eq('id', userId)
-      .single()
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking admin role:', error)
-      return false
-    }
-
-    return data?.rol === 'admin'
-  } catch (err) {
-    console.error('Error checking admin role:', err)
-    return false
-  }
-}
-  // Función para agregar/quitar favoritos
-  const toggleFavorito = async (lugarId, e) => {
-    if (e) {
-      e.stopPropagation() // Evitar que dispare el click de la tarjeta
-    }
-    
-    if (!user) {
-      // Si no está autenticado, redirigir al login
-      router.push('/auth/login')
-      return
-    }
-
-    const yaEsta = favoritos.includes(lugarId)
-    
-    try {
-      if (yaEsta) {
-        // Quitar de favoritos
-        const { error } = await supabase
-          .from('favoritos')
-          .delete()
-          .eq('usuario_id', user.id)
-          .eq('lugar_id', lugarId)
-        
-        if (error) {
-          console.error('Error al quitar favorito:', error)
-          return
-        }
-      } else {
-        // Agregar a favoritos
-        const { error } = await supabase
-          .from('favoritos')
-          .insert({ 
-            usuario_id: user.id, 
-            lugar_id: lugarId 
-          })
-        
-        if (error) {
-          console.error('Error al agregar favorito:', error)
-          return
-        }
-      }
-
-      // Actualizar lista local
-      const { data, error } = await supabase
-        .from('favoritos')
-        .select('lugar_id')
-        .eq('usuario_id', user.id)
-      
-      if (error) {
-        console.error('Error al actualizar favoritos:', error)
-      } else {
-        setFavoritos(data ? data.map(f => f.lugar_id) : [])
-      }
-    } catch (error) {
-      console.error('Error en toggleFavorito:', error)
-    }
-  }
-
-// 1. Cargar lugares desde Supabase
-useEffect(() => {
-  const fetchPlaces = async () => {
-    try {
-      setIsLoading(true)
-      const { data, error } = await supabase
-        .from('lugares')
-        .select('id, nombre, descripcion, municipio, url_imagen, destacado')
-
-      if (error) {
-        console.error('Error al obtener lugares:', error)
-        console.error('Detalles del error:', error.message)
-      } else {
-        console.log('Datos obtenidos:', data)
-        setPlaces(data || [])
-      }
-    } catch (error) {
-      console.error('Error al conectar con Supabase:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  fetchPlaces()
-}, [])
-
-// 2. Verificar autenticación y suscripción
-useEffect(() => {
-  let subscription
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user) {
-      setIsAuthenticated(true)
-      setUser(session.user)
-      fetchUserProfileImage(session.user.id)
-      const adminStatus = await checkAdminRole(session.user.id)
-      setIsAdmin(adminStatus)
-    }
-
-    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setIsAuthenticated(!!session?.user)
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        fetchUserProfileImage(session.user.id)
-        const adminStatus = await checkAdminRole(session.user.id)
-        setIsAdmin(adminStatus)
-      } else {
-        setUserProfileImage(null)
-        setIsAdmin(false)
-      }
-    })
-
-    subscription = data.subscription
-  }
-
-  checkAuth()
-
-  return () => {
-    subscription?.unsubscribe()
-  }
-}, [])
-
-// 3. Contador de visitas
-useEffect(() => {
-  const fetchVisitas = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('contador_visitas')
-        .select('total_visitas')
-        .eq('id', 1)
-        .single()
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching visits:', error)
-        return
-      }
-
-      const visitasActuales = data?.total_visitas || 0
-      setTotalVisitas(visitasActuales + 1)
-
-      await supabase
-        .from('contador_visitas')
-        .upsert({
-          id: 1,
-          total_visitas: visitasActuales + 1
-        })
-    } catch (err) {
-      console.error('Error with visit counter:', err)
-    }
-  }
-
-  fetchVisitas()
-}, [])
-
-// 4. Favoritos por usuario
-useEffect(() => {
-  const fetchFavoritos = async () => {
-    if (!user) {
-      setFavoritos([])
-      return
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('favoritos')
-        .select('lugar_id')
-        .eq('usuario_id', user.id)
-
-      if (error) {
-        console.error('Error al obtener favoritos:', error)
-      } else {
-        setFavoritos(data ? data.map(f => f.lugar_id) : [])
-      }
-    } catch (error) {
-      console.error('Error al conectar con favoritos:', error)
-    }
-  }
-
-  fetchFavoritos()
-}, [user])
- 
-
-
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     await supabase.auth.signOut()
     setIsAuthenticated(false)
     setUser(null)
@@ -473,29 +484,49 @@ useEffect(() => {
     setShowUserMenu(false)
   }
 
+  // Event handlers
+  const handleMouseEnterButton = (e: MouseEvent<HTMLButtonElement>, color: string): void => {
+    e.currentTarget.style.backgroundColor = color
+  }
+
+  const handleMouseLeaveButton = (e: MouseEvent<HTMLButtonElement>, color: string): void => {
+    e.currentTarget.style.backgroundColor = color
+  }
+
+  const handleImageError = (e: ImageErrorEvent): void => {
+    const target = e.target as HTMLImageElement
+    target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
+    target.style.display = 'flex'
+    target.style.alignItems = 'center'
+    target.style.justifyContent = 'center'
+    target.style.color = 'white'
+    target.style.fontSize = '2rem'
+    target.innerHTML = '📸'
+  }
+
   // Filtrar lugares
-  const filtered = places.filter(p => {
+  const filtered: Lugar[] = places.filter(p => {
     const searchText = `${p.nombre || ''} ${p.descripcion || ''}`.toLowerCase()
     const matchesSearch = searchText.includes(search.toLowerCase())
     const matchesMunicipio = selectedMunicipio === 'Todos' || p.municipio === selectedMunicipio
     return matchesSearch && matchesMunicipio
   })
 
-  const destacados = places.filter(p => p.destacado === true)
-  const noDestacados = places.filter(p => p.destacado === false)
+  const destacados: Lugar[] = places.filter(p => p.destacado === true)
+  const noDestacados: Lugar[] = places.filter(p => p.destacado === false)
 
-  const firstRowPlaces = destacados
-  const secondRowPlaces = noDestacados
+  const firstRowPlaces: Lugar[] = destacados
+  const secondRowPlaces: Lugar[] = noDestacados
 
   // Navigation items
-  const navItems = [
+  const navItems: NavItem[] = [
     { name: 'Inicio', href: '/' },
     { name: 'Recomendaciones', href: '/recomendaciones' },
     { name: 'Nosotros', href: '/nosotros' },
     { name: 'Contacto', href: '/contacto' }
   ]
 
-  // Mostrar loading mientras se cargan los lugares
+  // Loading state
   if (isLoading) {
     return (
       <div style={{ 
@@ -504,9 +535,8 @@ useEffect(() => {
         alignItems: 'center', 
         justifyContent: 'center',
         background: isDarkMode 
-  ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
-  : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
-
+          ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
+          : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
         padding: '1rem'
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -561,11 +591,13 @@ useEffect(() => {
               justifyContent: 'center',
             }}>
               <Image
-                src="logo.jpg" 
+                src="/logo.jpg" 
                 alt="Logo" 
+                width={50}
+                height={50}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
-                   </div>
+            </div>
             <h2 style={{ 
               margin: 0, 
               fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', 
@@ -578,25 +610,25 @@ useEffect(() => {
 
           {/* Toggle de modo oscuro */}
           <button
-  onClick={() => setIsDarkMode(!isDarkMode)}
-  style={{
-    background: 'rgba(255,255,255,0.2)',
-    border: 'none',
-    color: 'white',
-    padding: 'clamp(0.4rem, 1vw, 0.5rem)',
-    borderRadius: '0.5rem',
-    cursor: 'pointer',
-    fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-    transition: 'all 0.3s ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }}
-  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
-  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
->
-  {isDarkMode ? '☀️' : '🌙'}
-</button>
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              color: 'white',
+              padding: 'clamp(0.4rem, 1vw, 0.5rem)',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
 
           {/* Desktop Navigation */}
           <nav style={{ display: 'none' }} className="desktop-nav">
@@ -619,8 +651,8 @@ useEffect(() => {
                       padding: '0.5rem 1rem',
                       borderRadius: '0.5rem'
                     }}
-                    onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                    onMouseLeave={e => e.target.style.background = 'transparent'}
+                    onMouseEnter={e => (e.target as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.2)'}
+                    onMouseLeave={e => (e.target as HTMLAnchorElement).style.background = 'transparent'}
                   >
                     {item.name}
                   </a>
@@ -646,14 +678,14 @@ useEffect(() => {
                   transition: 'all 0.3s ease',
                   fontSize: 'clamp(0.8rem, 2vw, 0.9rem)'
                 }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseEnter={e => handleMouseEnterButton(e, '#f0f0f0')}
+                onMouseLeave={e => handleMouseLeaveButton(e, 'white')}
               >
                 Iniciar sesión
               </button>
             ) : (
               <div style={{ position: 'relative' }}>
-                {/* ✅ Avatar del usuario con imagen de perfil real */}
+                {/* Avatar del usuario con imagen de perfil real */}
                 <div
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   style={{
@@ -675,27 +707,31 @@ useEffect(() => {
                     borderRadius: '50%', 
                     background: 'white', 
                     color: isDarkMode ? '#f9fafb' : '#333',
-border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
+                    border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    overflow: 'hidden',
-                    border: '2px solid rgba(255,255,255,0.3)'
+                    overflow: 'hidden'
                   }}>
-                    {/* ✅ Mostrar imagen de perfil o emoji por defecto */}
                     {userProfileImage ? (
                       <Image
                         src={`${userProfileImage}?t=${Date.now()}`} 
                         alt="Perfil" 
+                        width={35}
+                        height={35}
                         style={{ 
                           width: '100%', 
                           height: '100%', 
                           objectFit: 'cover',
                           borderRadius: '50%'
                         }}
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                          e.target.nextSibling.style.display = 'flex'
+                        onError={(e: ImageErrorEvent) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          const nextSibling = target.nextSibling as HTMLElement
+                          if (nextSibling) {
+                            nextSibling.style.display = 'flex'
+                          }
                         }}
                       />
                     ) : null}
@@ -804,29 +840,28 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                       ❤️ Mis Favoritos
                     </button>
                     {isAdmin && (
-  <button 
-    onClick={() => {
-      setShowUserMenu(false)
-      router.push('/admin')
-    }} 
-    style={{ 
-      width: '100%', 
-      padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
-      border: 'none', 
-      background: 'transparent', 
-      color: isDarkMode ? '#f9fafb' : '#333',
-      textAlign: 'left', 
-      cursor: 'pointer',
-      fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
-      transition: 'background 0.2s ease'
-    }}
-    onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
-    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-  >
-    ⚙️ Panel de Administración
-  </button>
-)}
-
+                      <button 
+                        onClick={() => {
+                          setShowUserMenu(false)
+                          router.push('/admin')
+                        }} 
+                        style={{ 
+                          width: '100%', 
+                          padding: 'clamp(0.6rem, 2vw, 0.8rem) 1rem', 
+                          border: 'none', 
+                          background: 'transparent', 
+                          color: isDarkMode ? '#f9fafb' : '#333',
+                          textAlign: 'left', 
+                          cursor: 'pointer',
+                          fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
+                          transition: 'background 0.2s ease'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        ⚙️ Panel de Administración
+                      </button>
+                    )}
                     
                     <div style={{ borderTop: '1px solid #eee' }}>
                       <button 
@@ -912,8 +947,8 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                         transition: 'all 0.3s ease',
                         fontSize: 'clamp(0.9rem, 2.5vw, 1rem)'
                       }}
-                      onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                      onMouseLeave={e => e.target.style.background = 'transparent'}
+                      onMouseEnter={e => (e.target as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.2)'}
+                      onMouseLeave={e => (e.target as HTMLAnchorElement).style.background = 'transparent'}
                     >
                       {item.name}
                     </a>
@@ -924,42 +959,43 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
           </div>
         )}
       </header>
+
       {/* CSS Styles */}
-<style jsx global>{`
-  @media (min-width: 768px) {
-    .desktop-nav {
-      display: block !important;
-    }
-    .hamburger-btn {
-      display: none !important;
-    }
-    .desktop-only {
-      display: inline !important;
-    }
-  }
-  
-  @media (max-width: 767px) {
-    .desktop-nav {
-      display: none !important;
-    }
-    .hamburger-btn {
-      display: block !important;
-    }
-    .desktop-only {
-      display: none !important;
-    }
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`}</style>
+      <style jsx global>{`
+        @media (min-width: 768px) {
+          .desktop-nav {
+            display: block !important;
+          }
+          .hamburger-btn {
+            display: none !important;
+          }
+          .desktop-only {
+            display: inline !important;
+          }
+        }
+        
+        @media (max-width: 767px) {
+          .desktop-nav {
+            display: none !important;
+          }
+          .hamburger-btn {
+            display: block !important;
+          }
+          .desktop-only {
+            display: none !important;
+          }
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
 
       <main style={{ 
         flex: 1,
         padding: '1.5rem 1rem', 
-          background: isDarkMode 
+        background: isDarkMode 
           ? 'linear-gradient(to bottom, #1a1a1a, #2d2d2d)' 
           : 'linear-gradient(to bottom, #e0f7fa, #e6ffe9)',
         minHeight: '100vh'
@@ -977,36 +1013,35 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
               Descubre la Sierra Gorda
             </h1>
             <div style={{
-  background: isDarkMode ? 'rgba(45,45,45,0.9)' : 'rgba(255,255,255,0.9)',
-  padding: '1rem 1.5rem',
-  borderRadius: '1rem',
-  marginBottom: '1rem',
-  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: '1rem'
-}}>
- <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: isDarkMode ? '#60a5fa' : '#004e92' }}>
-    {user ? (
-      <span>👋 ¡Hola, <strong>{user.name || user.email?.split('@')[0] || 'Usuario'}!</strong></span>
-    ) : (
-      <span>👋 ¡Bienvenido a Cultour!</span>
-    )}
-  </div>
-  <div style={{ 
-    fontSize: 'clamp(0.9rem, 2vw, 1rem)', 
-    color: isDarkMode ? '#34d399' : '#00a86b',
-    
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  }}>
-    <span>👥</span>
-    <span><strong>{totalVisitas.toLocaleString()}</strong> visitas</span>
-  </div>
-</div>
+              background: isDarkMode ? 'rgba(45,45,45,0.9)' : 'rgba(255,255,255,0.9)',
+              padding: '1rem 1.5rem',
+              borderRadius: '1rem',
+              marginBottom: '1rem',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', color: isDarkMode ? '#60a5fa' : '#004e92' }}>
+                {user ? (
+                  <span>👋 ¡Hola, <strong>{user.name || user.email?.split('@')[0] || 'Usuario'}!</strong></span>
+                ) : (
+                  <span>👋 ¡Bienvenido a Cultour!</span>
+                )}
+              </div>
+              <div style={{ 
+                fontSize: 'clamp(0.9rem, 2vw, 1rem)', 
+                color: isDarkMode ? '#34d399' : '#00a86b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span>👥</span>
+                <span><strong>{totalVisitas.toLocaleString()}</strong> visitas</span>
+              </div>
+            </div>
             <h2 style={{ 
               fontSize: '1.6rem', 
               color: isDarkMode ? '#34d399' : '#00a86b', 
@@ -1019,7 +1054,6 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
             <p style={{ 
               fontSize: '1.1rem', 
               color: isDarkMode ? '#d1d5db' : '#555',
-
               maxWidth: '600px',
               margin: '0 auto',
               lineHeight: '1.6'
@@ -1049,7 +1083,7 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 width: '90%',
                 maxWidth: '400px',
                 borderRadius: '2rem',
-               border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
+                border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 fontSize: '1rem',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
                 transition: 'all 0.3s ease'
@@ -1059,7 +1093,7 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 e.target.style.boxShadow = '0 4px 20px rgba(0,78,146,0.2)'
               }}
               onBlur={e => {
-                e.target.style.borderColor = '#ddd'
+                e.target.style.borderColor = isDarkMode ? '#4b5563' : '#ddd'
                 e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)'
               }}
             />
@@ -1071,9 +1105,10 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 maxWidth: '300px',
                 padding: '0.8rem 1.2rem', 
                 borderRadius: '1rem',
-               border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
+                border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 fontSize: '1rem',
                 background: isDarkMode ? '#374151' : 'white',
+                color: isDarkMode ? '#f9fafb' : '#333',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                 cursor: 'pointer'
               }}
@@ -1083,27 +1118,26 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-  <button
-    onClick={() => router.push('/recomendaciones')}
-    style={{
-      background: 'linear-gradient(135deg, #004e92, #00a86b)',
-      color: 'white',
-      padding: '0.8rem 1.5rem',
-      fontSize: '1rem',
-      borderRadius: '2rem',
-      border: 'none',
-      fontWeight: 'bold',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
-    }}
-    onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-  >
-    🤖 Ver Recomendaciones IA
-  </button>
-</div>
-
+            <button
+              onClick={() => router.push('/recomendaciones')}
+              style={{
+                background: 'linear-gradient(135deg, #004e92, #00a86b)',
+                color: 'white',
+                padding: '0.8rem 1.5rem',
+                fontSize: '1rem',
+                borderRadius: '2rem',
+                border: 'none',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              🤖 Ver Recomendaciones IA
+            </button>
+          </div>
 
           {/* Carruseles infinitos mejorados */}
           {places.length > 0 && (
@@ -1119,7 +1153,12 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                   }}>
                     🏛️ Lugares Destacados
                   </h2>
-                  <InfiniteCarousel places={firstRowPlaces} speed={60} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} isDarkMode={isDarkMode} />
+                  <InfiniteCarousel 
+                    places={firstRowPlaces} 
+                    favoritos={favoritos} 
+                    toggleFavorito={toggleFavorito} 
+                    isDarkMode={isDarkMode} 
+                  />
                 </div>
               )}
               
@@ -1127,14 +1166,19 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                 <div>
                   <h2 style={{ 
                     fontSize: '2rem', 
-                   color: isDarkMode ? '#34d399' : '#00a86b', 
+                    color: isDarkMode ? '#34d399' : '#00a86b', 
                     margin: '2rem 0 1.5rem 0',
                     fontWeight: 'bold',
                     textAlign: 'center'
                   }}>
                     🌿 Naturaleza y Aventura
                   </h2>
-                  <InfiniteCarousel places={secondRowPlaces} speed={50} favoritos={favoritos} toggleFavorito={toggleFavorito} user={user} isDarkMode={isDarkMode} />
+                  <InfiniteCarousel 
+                    places={secondRowPlaces} 
+                    favoritos={favoritos} 
+                    toggleFavorito={toggleFavorito} 
+                    isDarkMode={isDarkMode} 
+                  />
                 </div>
               )}
             </section>
@@ -1154,7 +1198,6 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                     color: isDarkMode ? '#60a5fa' : '#004e92',
                     marginBottom: '1rem',
                     borderBottom: isDarkMode ? '3px solid #34d399' : '3px solid #00a86b',
-
                     paddingBottom: '0.5rem'
                   }}
                 >
@@ -1187,7 +1230,7 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                       <div style={{ position: 'relative', overflow: 'hidden' }}>
                         {/* Botón de favorito */}
                         <div
-                          onClick={(e) => toggleFavorito(place.id, e)}
+                          onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
                           style={{
                             position: 'absolute',
                             top: '1rem',
@@ -1207,11 +1250,11 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                             justifyContent: 'center',
                             backdropFilter: 'blur(10px)'
                           }}
-                          onMouseEnter={(e) => {
+                          onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
                             e.currentTarget.style.transform = 'scale(1.15)'
                             e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
                           }}
-                          onMouseLeave={(e) => {
+                          onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
                             e.currentTarget.style.transform = 'scale(1)'
                             e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
                           }}
@@ -1226,21 +1269,15 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
                         <Image
                           src={place.url_imagen}
                           alt={place.nombre}
+                          width={400}
+                          height={220}
                           style={{
                             width: '100%',
                             height: '220px',
                             objectFit: 'cover',
                             transition: 'transform 0.3s ease'
                           }}
-                          onError={(e) => {
-                            e.target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
-                            e.target.style.display = 'flex'
-                            e.target.style.alignItems = 'center'
-                            e.target.style.justifyContent = 'center'
-                            e.target.style.color = 'white'
-                            e.target.style.fontSize = '2rem'
-                            e.target.innerHTML = '📸'
-                          }}
+                          onError={handleImageError}
                         />
                         <div style={{
                           position: 'absolute',
@@ -1303,12 +1340,12 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
             <div style={{
               textAlign: 'center',
               padding: '4rem 2rem',
-              color: '#666'
+              color: isDarkMode ? '#d1d5db' : '#666'
             }}>
               <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
                 No se encontraron lugares que coincidan con tu búsqueda
               </h3>
-         <p>Intenta con otros términos de búsqueda o selecciona &quot;Todos&quot; los municipios.</p>
+              <p>Intenta con otros términos de búsqueda o selecciona &quot;Todos&quot; los municipios.</p>
             </div>
           )}
         </div>
@@ -1336,14 +1373,6 @@ border: isDarkMode ? '2px solid #4b5563' : '2px solid #ddd',
           Vive la cultura, descubre la sierra
         </p>
       </footer>
-
-      {/* CSS para la animación de loading */}
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   )
 }

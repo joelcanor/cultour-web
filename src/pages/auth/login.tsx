@@ -21,59 +21,57 @@ export default function LoginPage() {
   const closeTerms = () => dialogRef.current?.close()
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  if (!acceptedTerms) {
-    setError('Debes aceptar los términos y condiciones.')
-    return
-  }
-  if (!captchaToken) {
-    setError('Por favor completa el reCAPTCHA.')
-    return
-  }
+    if (!acceptedTerms) {
+      setError('Debes aceptar los términos y condiciones.')
+      return
+    }
+    if (!captchaToken) {
+      setError('Por favor completa el reCAPTCHA.')
+      return
+    }
 
-  setIsLoading(true)
-  setError('')
-  setShowResendEmail(false)
+    setIsLoading(true)
+    setError('')
+    setShowResendEmail(false)
 
-const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password })
 
-if (error) {
-  setError(error.message)
+    if (error) {
+      setError(error.message)
 
-  if (error.message.toLowerCase().includes('confirm')) {
-    setShowResendEmail(true)
-  }
-} else {
-  const session = signInData.session
-  const user = session?.user
-
-  if (user) {
-    const { data: perfil, error: perfilError } = await supabase
-      .from('perfil_usuario')
-      .select('rol')
-      .eq('id', user.id)
-      .single()
-
-    if (perfilError) {
-      console.error('Error obteniendo rol:', perfilError.message)
-      router.push('/')
+      if (error.message.toLowerCase().includes('confirm')) {
+        setShowResendEmail(true)
+      }
     } else {
-      if (perfil?.rol === 'admin') {
-        router.push('/admin')
+      const session = signInData.session
+      const user = session?.user
+
+      if (user) {
+        const { data: perfil, error: perfilError } = await supabase
+          .from('perfil_usuario')
+          .select('rol')
+          .eq('id', user.id)
+          .single()
+
+        if (perfilError) {
+          console.error('Error obteniendo rol:', perfilError.message)
+          router.push('/')
+        } else {
+          if (perfil?.rol === 'admin') {
+            router.push('/admin')
+          } else {
+            router.push('/')
+          }
+        }
       } else {
         router.push('/')
       }
     }
-  } else {
-    router.push('/')
+
+    setIsLoading(false)
   }
-}
-
-
-  setIsLoading(false)
-}
-
 
   const handleForgotPassword = async () => {
     if (!email) { 
@@ -92,19 +90,27 @@ if (error) {
   }
 
   const handleResendEmail = async () => {
-  const { error } = await supabase.auth.resend({
-    type: 'signup',
-    email: email,
-  })
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    })
 
-  if (error) {
-    setError('Error al reenviar el correo: ' + error.message)
-  } else {
-    setError('Correo de confirmación reenviado correctamente. Revisa tu bandeja.')
-    setShowResendEmail(false)
+    if (error) {
+      setError('Error al reenviar el correo: ' + error.message)
+    } else {
+      setError('Correo de confirmación reenviado correctamente. Revisa tu bandeja.')
+      setShowResendEmail(false)
+    }
   }
-}
 
+  // Función para manejar el hover del botón de "olvidar contraseña"
+  const handleForgotButtonMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    (e.target as HTMLButtonElement).style.color = '#00a86b'
+  }
+
+  const handleForgotButtonMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    (e.target as HTMLButtonElement).style.color = '#004e92'
+  }
 
   const inputStyle = (hasError: boolean = false) => ({
     padding: '1rem 1.2rem',
@@ -197,9 +203,9 @@ if (error) {
           <Image
             src="/logo.jpg" 
             alt="Logo" 
+            width={100}
+            height={100}
             style={{ 
-              width: '100px', 
-              height: '100px', 
               borderRadius: '50%', 
               objectFit: 'cover', 
               boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
@@ -274,8 +280,8 @@ if (error) {
             type="button" 
             onClick={handleForgotPassword} 
             style={forgotButtonStyle}
-            onMouseEnter={(e) => e.target.style.color = '#00a86b'}
-            onMouseLeave={(e) => e.target.style.color = '#004e92'}
+            onMouseEnter={handleForgotButtonMouseEnter}
+            onMouseLeave={handleForgotButtonMouseLeave}
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -315,49 +321,48 @@ if (error) {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <ReCAPTCHA 
               sitekey="6LeLOI4rAAAAAB2vTL1uVICM9uOW5vu7HGFkV6-1" 
-              onChange={token => setCaptchaToken(token || '')} 
+              onChange={(token) => setCaptchaToken(token || '')} 
             />
           </div>
 
           {/* Error Message */}
-    {error && (
-  <motion.div 
-    initial={{ opacity: 0, scale: 0.95 }} 
-    animate={{ opacity: 1, scale: 1 }}
-    style={{
-      padding: '1rem',
-      backgroundColor: '#fef2f2',
-      border: '1px solid #fecaca',
-      borderRadius: '0.5rem',
-      color: '#dc2626',
-      fontSize: '0.9rem'
-    }}
-  >
-    <p style={{ marginBottom: showResendEmail ? '0.5rem' : '0' }}>
-      {error}
-    </p>
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                padding: '1rem',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '0.5rem',
+                color: '#dc2626',
+                fontSize: '0.9rem'
+              }}
+            >
+              <p style={{ marginBottom: showResendEmail ? '0.5rem' : '0' }}>
+                {error}
+              </p>
 
-    {showResendEmail && (
-      <button
-        type="button"
-        onClick={handleResendEmail}
-        style={{
-          background: 'none',
-          border: '1px solid #dc2626',
-          color: '#dc2626',
-          padding: '0.5rem 1rem',
-          borderRadius: '0.5rem',
-          fontSize: '0.85rem',
-          cursor: 'pointer',
-          marginTop: '0.5rem'
-        }}
-      >
-        Reenviar correo de confirmación
-      </button>
-    )}
-  </motion.div>
-)}
-
+              {showResendEmail && (
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  style={{
+                    background: 'none',
+                    border: '1px solid #dc2626',
+                    color: '#dc2626',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  Reenviar correo de confirmación
+                </button>
+              )}
+            </motion.div>
+          )}
 
           {/* Botón de login */}
           <motion.button
@@ -419,7 +424,9 @@ if (error) {
             <Image
               src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" 
               alt="Google" 
-              style={{ width: '20px', marginRight: '10px' }} 
+              width={20}
+              height={20}
+              style={{ marginRight: '10px' }} 
             />
             Iniciar con Google
           </motion.button>
@@ -438,7 +445,9 @@ if (error) {
             <Image
               src="https://cdn-icons-png.flaticon.com/512/847/847969.png" 
               alt="Registro" 
-              style={{ width: '20px', marginRight: '10px' }} 
+              width={20}
+              height={20}
+              style={{ marginRight: '10px' }} 
             />
             Crear Nueva Cuenta
           </motion.button>

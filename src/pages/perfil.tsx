@@ -53,7 +53,6 @@ export default function PerfilPage() {
     }
   }
 
-  // Toda la lógica de imagen se mantiene igual
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
@@ -76,7 +75,9 @@ export default function PerfilPage() {
       // Preview de la imagen
       const reader = new FileReader()
       reader.onload = (e) => {
-        setImageUrl(e.target?.result as string)
+        if (e.target?.result) {
+          setImageUrl(e.target.result as string)
+        }
       }
       reader.readAsDataURL(selectedFile)
     }
@@ -115,7 +116,9 @@ export default function PerfilPage() {
       
       const reader = new FileReader()
       reader.onload = (e) => {
-        setImageUrl(e.target?.result as string)
+        if (e.target?.result) {
+          setImageUrl(e.target.result as string)
+        }
       }
       reader.readAsDataURL(droppedFile)
     }
@@ -169,7 +172,6 @@ export default function PerfilPage() {
     }
   }
 
-  // Nueva función para guardar solo los datos del perfil
   const handleSaveProfile = async () => {
     if (!user) return
     
@@ -203,6 +205,24 @@ export default function PerfilPage() {
     setImageUrl(null)
     setError(null)
     setSuccess(null)
+  }
+
+  // Función para manejar hover de label
+  const handleLabelMouseEnter = (e: React.MouseEvent<HTMLLabelElement>) => {
+    (e.target as HTMLLabelElement).style.transform = 'translateY(-2px)'
+  }
+
+  const handleLabelMouseLeave = (e: React.MouseEvent<HTMLLabelElement>) => {
+    (e.target as HTMLLabelElement).style.transform = 'translateY(0)'
+  }
+
+  // Funciones para el hover de inputs
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    (e.target as HTMLInputElement).style.borderColor = '#00a86b'
+  }
+
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    (e.target as HTMLInputElement).style.borderColor = '#e9ecef'
   }
 
   return (
@@ -256,9 +276,9 @@ export default function PerfilPage() {
                   <Image 
                     src={`${imageUrl}?t=${Date.now()}`} 
                     alt="Foto de perfil" 
+                    width={180}
+                    height={180}
                     style={{ 
-                      width: 180, 
-                      height: 180, 
                       borderRadius: '50%', 
                       objectFit: 'cover',
                       border: '5px solid #004e92',
@@ -351,8 +371,8 @@ export default function PerfilPage() {
                     boxShadow: '0 4px 15px rgba(0, 78, 146, 0.3)',
                     display: 'inline-block'
                   }}
-                  onMouseEnter={e => e.target.style.transform = 'translateY(-2px)'}
-                  onMouseLeave={e => e.target.style.transform = 'translateY(0)'}
+                  onMouseEnter={handleLabelMouseEnter}
+                  onMouseLeave={handleLabelMouseLeave}
                 >
                   Seleccionar Imagen
                 </label>
@@ -429,8 +449,8 @@ export default function PerfilPage() {
                     transition: 'border-color 0.3s ease',
                     outline: 'none'
                   }}
-                  onFocus={e => e.target.style.borderColor = '#00a86b'}
-                  onBlur={e => e.target.style.borderColor = '#e9ecef'}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
               </div>
 
@@ -460,8 +480,8 @@ export default function PerfilPage() {
                     transition: 'border-color 0.3s ease',
                     outline: 'none'
                   }}
-                  onFocus={e => e.target.style.borderColor = '#00a86b'}
-                  onBlur={e => e.target.style.borderColor = '#e9ecef'}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
               </div>
 
