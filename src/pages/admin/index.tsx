@@ -56,38 +56,37 @@ export default function AdminDashboard() {
     target.src = '/logo.jpg'
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Obtener información del admin actual
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          const { data: adminData } = await supabase
-            .from('perfil_usuario')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          
-          setAdminInfo(adminData)
-        }
-
-        // Obtener usuarios usando la función RPC (igual que en el otro componente)
-        const { data: usuariosData, error: usuariosError } = await supabase.rpc('obtener_todos_los_usuarios')
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Obtener información del admin actual
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        const { data: adminData } = await supabase
+          .from('perfil_usuario')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
         
-        if (usuariosError) {
-          console.error('Error al obtener usuarios:', usuariosError)
-        } else {
-          // Normalizar datos igual que en UsuariosAdmin
-          const usuariosNormalizados = (usuariosData || []).map((u: UsuarioData) => ({
-            ...u,
-            rol: u.rol || 'usuario',
-            nombre: u.nombre || '',
-            telefono: u.telefono || '',
-            foto_url: u.avatar_url || u.foto_url || '',
-          }))
-          setUsuarios(usuariosNormalizados)
-        }
+        setAdminInfo(adminData)
+      }
 
+      // Obtener usuarios usando la función RPC
+      const { data: usuariosData, error: usuariosError } = await supabase.rpc('obtener_todos_los_usuarios')
+      
+      if (usuariosError) {
+        console.error('Error al obtener usuarios:', usuariosError)
+      } else {
+        // Normalizar datos igual que en UsuariosAdmin
+        const usuariosNormalizados: UsuarioData[] = (usuariosData || []).map((u: any) => ({
+          ...u,
+          rol: u.rol || 'usuario',
+          nombre: u.nombre || '',
+          telefono: u.telefono || '',
+          foto_url: u.avatar_url || u.foto_url || '',
+        }))
+        setUsuarios(usuariosNormalizados)
+        
         // Obtener lugares
         const { data: lugaresData, error: lugaresError } = await supabase
           .from('lugares')
@@ -96,7 +95,7 @@ export default function AdminDashboard() {
         if (lugaresError) {
           console.error('Error al obtener lugares:', lugaresError)
         }
-
+        
         // Obtener visitas totales del sitio
         const { data: visitasData, error: visitasError } = await supabase
           .from('contador_visitas')
@@ -108,31 +107,27 @@ export default function AdminDashboard() {
           console.error('Error al obtener visitas:', visitasError)
         }
 
-        // Calcular estadísticas
-        if (usuariosData && lugaresData) {
-          const usuariosNormalizados = (usuariosData || []).map((u: UsuarioData) => ({
-            ...u,
-            rol: u.rol || 'usuario'
-          }))
-
+        // Calcular estadísticas usando los datos ya normalizados
+        if (lugaresData) {
           setStats({
             totalUsuarios: usuariosNormalizados.length,
             totalLugares: lugaresData.length,
-            usuariosActivos: usuariosNormalizados.filter(u => u.rol === 'usuario').length,
-            lugaresDestacados: lugaresData.filter(l => l.destacado === true).length,
+            usuariosActivos: usuariosNormalizados.filter((u: UsuarioData) => u.rol === 'usuario').length,
+            lugaresDestacados: lugaresData.filter((l: any) => l.destacado === true).length,
             visitasTotales: visitasData?.total_visitas || 0
           })
         }
-
-      } catch (error) {
-        console.error('Error general:', error)
-      } finally {
-        setLoading(false)
       }
-    }
 
-    fetchData()
-  }, [])
+    } catch (error) {
+      console.error('Error general:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  fetchData()
+}, [])
 
   const cambiarRol = async (id: string, nuevoRol: string) => {
     const { error } = await supabase
