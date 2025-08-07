@@ -102,125 +102,118 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito }: CarouselProps) 
           transition: 'none'
         }}
       >
-        {duplicatedPlaces.map((place, index) => {
-          // Construir la URL completa de la imagen desde el bucket de Supabase
-          const imageUrl = supabase.storage
-            .from('imagenes-lugares')
-            .getPublicUrl(place.url_imagen).data.publicUrl
-          
-          return (
-            <div
-              key={`${place.id}-${index}`}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              onClick={() => router.push(`/lugares/${place.id}`)}
+        {duplicatedPlaces.map((place, index) => (
+          <div
+            key={`${place.id}-${index}`}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onClick={() => router.push(`/lugares/${place.id}`)}
+            style={{
+              minWidth: 'clamp(220px, 45vw, 280px)',
+              height: 'clamp(160px, 35vw, 200px)',
+              background: '#fff',
+              borderRadius: '1rem',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+              overflow: 'hidden',
+              cursor: 'pointer',
+              position: 'relative',
+              flexShrink: 0,
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+              transition: 'transform 0.3s ease',
+              zIndex: isHovered ? 10 : 1
+            }}
+          >
+            <Image
+              src={place.url_imagen}
+              alt={place.nombre}
+              width={280}
+              height={200}
               style={{
-                minWidth: 'clamp(220px, 45vw, 280px)',
-                height: 'clamp(160px, 35vw, 200px)',
-                background: '#fff',
-                borderRadius: '1rem',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                position: 'relative',
-                flexShrink: 0,
-                transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                transition: 'transform 0.3s ease',
-                zIndex: isHovered ? 10 : 1
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
               }}
-            >
-              <Image
-                src={imageUrl}
-                alt={place.nombre}
-                width={280}
-                height={200}
+              onError={handleImageError}
+            />
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+              padding: 'clamp(1rem, 3vw, 2rem) clamp(0.5rem, 2vw, 1rem) clamp(0.5rem, 2vw, 1rem)',
+              color: 'white'
+            }}>
+              {/* Botón de favorito */}
+              <div
+                onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
+                  position: 'absolute',
+                  top: 'clamp(-2rem, -5vw, -3rem)',
+                  left: 'clamp(0.5rem, 2vw, 1rem)',
+                  fontSize: 'clamp(1.2rem, 4vw, 1.8rem)',
+                  cursor: 'pointer',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                  transition: 'all 0.3s ease',
+                  transform: 'scale(1)',
+                  zIndex: 20
                 }}
-                onError={handleImageError}
-              />
+                onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+                  const target = e.currentTarget
+                  target.style.transform = 'scale(1.2)'
+                  target.style.filter = 'brightness(1.2)'
+                }}
+                onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+                  const target = e.currentTarget
+                  target.style.transform = 'scale(1)'
+                  target.style.filter = 'brightness(1)'
+                }}
+              >
+                {favoritos.includes(place.id) ? (
+                  <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
+                ) : (
+                  <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
+                )}
+              </div>
+              
               <div style={{
                 position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-                padding: 'clamp(1rem, 3vw, 2rem) clamp(0.5rem, 2vw, 1rem) clamp(0.5rem, 2vw, 1rem)',
-                color: 'white'
+                top: '0.5rem',
+                right: '0.5rem',
+                background: 'rgba(0,168,107,0.9)',
+                color: 'white',
+                padding: 'clamp(0.2rem, 1vw, 0.3rem) clamp(0.4rem, 1.5vw, 0.7rem)',
+                borderRadius: '0.5rem',
+                fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
+                fontWeight: 'bold'
               }}>
-                {/* Botón de favorito */}
-                <div
-                  onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
-                  style={{
-                    position: 'absolute',
-                    top: 'clamp(-2rem, -5vw, -3rem)',
-                    left: 'clamp(0.5rem, 2vw, 1rem)',
-                    fontSize: 'clamp(1.2rem, 4vw, 1.8rem)',
-                    cursor: 'pointer',
-                    textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                    transition: 'all 0.3s ease',
-                    transform: 'scale(1)',
-                    zIndex: 20
-                  }}
-                  onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
-                    const target = e.currentTarget
-                    target.style.transform = 'scale(1.2)'
-                    target.style.filter = 'brightness(1.2)'
-                  }}
-                  onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
-                    const target = e.currentTarget
-                    target.style.transform = 'scale(1)'
-                    target.style.filter = 'brightness(1)'
-                  }}
-                >
-                  {favoritos.includes(place.id) ? (
-                    <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
-                  ) : (
-                    <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
-                  )}
-                </div>
-                
-                <div style={{
-                  position: 'absolute',
-                  top: '0.5rem',
-                  right: '0.5rem',
-                  background: 'rgba(0,168,107,0.9)',
-                  color: 'white',
-                  padding: 'clamp(0.2rem, 1vw, 0.3rem) clamp(0.4rem, 1.5vw, 0.7rem)',
-                  borderRadius: '0.5rem',
-                  fontSize: 'clamp(0.7rem, 1.8vw, 0.8rem)',
-                  fontWeight: 'bold'
-                }}>
-                  {place.municipio}
-                </div>
-                <h3 style={{
-                  margin: 0,
-                  fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-                  fontWeight: 'bold',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.7)'
-                }}>
-                  {place.nombre}
-                </h3>
-                <p style={{
-                  margin: '0.3rem 0 0 0',
-                  fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-                  opacity: '0.9',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>
-                  {place.descripcion}
-                </p>
+                {place.municipio}
               </div>
+              <h3 style={{
+                margin: 0,
+                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                fontWeight: 'bold',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.7)'
+              }}>
+                {place.nombre}
+              </h3>
+              <p style={{
+                margin: '0.3rem 0 0 0',
+                fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
+                opacity: '0.9',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {place.descripcion}
+              </p>
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1252,118 +1245,111 @@ export default function Home() {
                   gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                   gap: '2rem'
                 }}>
-                  {lugaresMunicipio.map(place => {
-                    // Construir la URL completa de la imagen desde el bucket de Supabase
-                    const imageUrl = supabase.storage
-                      .from('imagenes-lugares')
-                      .getPublicUrl(place.url_imagen).data.publicUrl
-                    
-                    return (
-                      <div
-                        key={place.id}
-                        onClick={() => router.push(`/lugares/${place.id}`)}
-                        style={{
-                          background: '#fff',
-                          borderRadius: '1.5rem',
-                          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-                          overflow: 'hidden',
-                          cursor: 'pointer',
-                          transition: 'transform 0.3s ease'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.transform = 'scale(1.05) translateY(-5px)'
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.transform = 'scale(1) translateY(0px)'
-                        }}
-                      >
-                        <div style={{ position: 'relative', overflow: 'hidden' }}>
-                          {/* Botón de favorito */}
-                          <div
-                            onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
-                            style={{
-                              position: 'absolute',
-                              top: '1rem',
-                              left: '1rem',
-                              fontSize: '2rem',
-                              cursor: 'pointer',
-                              textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                              transition: 'all 0.3s ease',
-                              transform: 'scale(1)',
-                              zIndex: 20,
-                              background: 'rgba(255,255,255,0.2)',
-                              borderRadius: '50%',
-                              width: '45px',
-                              height: '45px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backdropFilter: 'blur(10px)'
-                            }}
-                            onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
-                              e.currentTarget.style.transform = 'scale(1.15)'
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
-                            }}
-                            onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
-                              e.currentTarget.style.transform = 'scale(1)'
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
-                            }}
-                          >
-                            {favoritos.includes(place.id) ? (
-                              <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
-                            ) : (
-                              <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
-                            )}
-                          </div>
-
-                          <Image
-                            src={imageUrl}
-                            alt={place.nombre}
-                            width={400}
-                            height={220}
-                            style={{
-                              width: '100%',
-                              height: '220px',
-                              objectFit: 'cover',
-                              transition: 'transform 0.3s ease'
-                            }}
-                            onError={handleImageError}
-                          />
-                          <div style={{
+                  {lugaresMunicipio.map(place => (
+                    <div
+                      key={place.id}
+                      onClick={() => router.push(`/lugares/${place.id}`)}
+                      style={{
+                        background: '#fff',
+                        borderRadius: '1.5rem',
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        transition: 'transform 0.3s ease'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'scale(1.05) translateY(-5px)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'scale(1) translateY(0px)'
+                      }}
+                    >
+                      <div style={{ position: 'relative', overflow: 'hidden' }}>
+                        {/* Botón de favorito */}
+                        <div
+                          onClick={(e: MouseEvent<HTMLDivElement>) => toggleFavorito(place.id, e)}
+                          style={{
                             position: 'absolute',
                             top: '1rem',
-                            right: '1rem',
-                            background: 'rgba(0,78,146,0.8)',
-                            color: 'white',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '1rem',
-                            fontSize: '0.9rem',
-                            fontWeight: '500'
-                          }}>
-                            {place.municipio}
-                          </div>
+                            left: '1rem',
+                            fontSize: '2rem',
+                            cursor: 'pointer',
+                            textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                            transition: 'all 0.3s ease',
+                            transform: 'scale(1)',
+                            zIndex: 20,
+                            background: 'rgba(255,255,255,0.2)',
+                            borderRadius: '50%',
+                            width: '45px',
+                            height: '45px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backdropFilter: 'blur(10px)'
+                          }}
+                          onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
+                            e.currentTarget.style.transform = 'scale(1.15)'
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
+                          }}
+                          onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+                          }}
+                        >
+                          {favoritos.includes(place.id) ? (
+                            <span style={{ color: '#ff4757', filter: 'drop-shadow(0 0 8px rgba(255,71,87,0.6))' }}>❤️</span>
+                          ) : (
+                            <span style={{ color: 'white', filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.8))' }}>🤍</span>
+                          )}
                         </div>
-                        <div style={{ padding: '1.5rem 2rem' }}>
-                          <h3 style={{
-                            color: '#004e92',
-                            margin: '0 0 0.5rem 0',
-                            fontSize: '1.4rem',
-                            fontWeight: 'bold'
-                          }}>
-                            {place.nombre}
-                          </h3>
-                          <p style={{
-                            color: '#666',
-                            margin: 0,
-                            fontSize: '1rem',
-                            lineHeight: '1.5'
-                          }}>
-                            {place.descripcion}
-                          </p>
+
+                        <Image
+                          src={place.url_imagen}
+                          alt={place.nombre}
+                          width={400}
+                          height={220}
+                          style={{
+                            width: '100%',
+                            height: '220px',
+                            objectFit: 'cover',
+                            transition: 'transform 0.3s ease'
+                          }}
+                          onError={handleImageError}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          background: 'rgba(0,78,146,0.8)',
+                          color: 'white',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '1rem',
+                          fontSize: '0.9rem',
+                          fontWeight: '500'
+                        }}>
+                          {place.municipio}
                         </div>
                       </div>
-                    )
-                  })}
+                      <div style={{ padding: '1.5rem 2rem' }}>
+                        <h3 style={{
+                          color: '#004e92',
+                          margin: '0 0 0.5rem 0',
+                          fontSize: '1.4rem',
+                          fontWeight: 'bold'
+                        }}>
+                          {place.nombre}
+                        </h3>
+                        <p style={{
+                          color: '#666',
+                          margin: 0,
+                          fontSize: '1rem',
+                          lineHeight: '1.5'
+                        }}>
+                          {place.descripcion}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             )
