@@ -26,6 +26,19 @@ export default function Header({
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  // ✅ Función para construir URL de imagen de perfil (igual que en index)
+  const buildProfileImageUrl = (foto_url: string | null | undefined): string | null => {
+    if (!foto_url) return null
+    
+    if (foto_url.startsWith('http')) {
+      return foto_url
+    } else {
+      return supabase.storage
+        .from('imagenes-perfil')
+        .getPublicUrl(foto_url).data.publicUrl
+    }
+  }
+
   // ✅ Función para cargar imagen de perfil del usuario
   const fetchUserProfileImage = async (userId: string) => {
     try {
@@ -41,7 +54,10 @@ export default function Header({
       }
 
       if (data?.foto_url) {
-        setUserProfileImage(data.foto_url)
+        // ✅ Usar la función para construir la URL correctamente
+        const imageUrl = buildProfileImageUrl(data.foto_url)
+        console.log('Image URL construida en Header:', imageUrl) // Para debugging
+        setUserProfileImage(imageUrl)
       } else {
         setUserProfileImage(null)
       }
@@ -97,10 +113,11 @@ export default function Header({
               justifyContent: 'center',
             }}>
               <Image 
-  src="/logo.jpg" 
-  alt="Logo" 
-  width={45}
-  height={45}
+                src="/logo.jpg" 
+                alt="Logo" 
+                width={45}
+                height={45}
+                style={{ objectFit: 'cover' }}
               />
             </div>
             <h2 style={{ 
@@ -197,21 +214,27 @@ export default function Header({
                   }}>
                     {/* ✅ Mostrar imagen de perfil o emoji por defecto */}
                     {userProfileImage ? (
-<Image
-  src={`${userProfileImage}?t=${Date.now()}`} 
-  alt="Perfil" 
-  width={35}
-  height={35}
-  style={{ 
-    objectFit: 'cover',
-    borderRadius: '50%' 
-  }}
-  onError={(e) => {
-    (e.target as HTMLImageElement).style.display = 'none';
-    ((e.target as HTMLImageElement).nextSibling as HTMLElement).style.display = 'flex';
-  }}
-/>
-
+                      <Image
+                        src={userProfileImage} 
+                        alt="Perfil" 
+                        width={35}
+                        height={35}
+                        style={{ 
+                          objectFit: 'cover',
+                          borderRadius: '50%' 
+                        }}
+                        onError={(e) => {
+                          console.error('Error loading image in Header:', userProfileImage) // Para debugging
+                          const img = e.target as HTMLImageElement
+                          img.style.display = 'none'
+                          const nextElement = img.nextSibling as HTMLElement
+                          if (nextElement) {
+                            nextElement.style.display = 'flex'
+                          }
+                          // Opcional: limpiar la imagen problemática
+                          setUserProfileImage(null)
+                        }}
+                      />
                     ) : null}
                     <div style={{ 
                       display: userProfileImage ? 'none' : 'flex',
@@ -264,7 +287,8 @@ export default function Header({
                       </div>
                       <div style={{ 
                         fontSize: '0.8rem', 
-                        color: '#666' 
+                        color: '#666',
+                        wordBreak: 'break-all'
                       }}>
                         {user?.email}
                       </div>

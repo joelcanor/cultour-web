@@ -36,11 +36,79 @@ export default function LugarDetalle() {
   const [comentarios, setComentarios] = useState<Comentario[]>([])
   const [nuevoComentario, setNuevoComentario] = useState('')
   const [user, setUser] = useState<User | null>(null)
+  const [userProfileImage, setUserProfileImage] = useState<string | null>(null)
+
+  // Función para manejar errores de imagen (igual que en index)
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>): void => {
+    const target = e.target as HTMLImageElement
+    target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
+    target.style.display = 'flex'
+    target.style.alignItems = 'center'
+    target.style.justifyContent = 'center'
+    target.style.color = 'white'
+    target.style.fontSize = '2rem'
+    target.innerHTML = '📸'
+  }
+
+  // Función para manejar errores de avatar
+  const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>): void => {
+    const img = e.target as HTMLImageElement
+    img.style.display = 'none'
+    const parent = img.parentElement
+    if (parent) {
+      const fallback = parent.querySelector('.avatar-fallback') as HTMLElement
+      if (fallback) {
+        fallback.style.display = 'flex'
+      }
+    }
+  }
+
+  // Función para construir URL de imagen de perfil (igual que en index)
+  const buildProfileImageUrl = (foto_url: string | null | undefined): string | null => {
+    if (!foto_url) return null
+    
+    if (foto_url.startsWith('http')) {
+      return foto_url
+    } else {
+      return supabase.storage
+        .from('imagenes-perfil')
+        .getPublicUrl(foto_url).data.publicUrl
+    }
+  }
+
+  // Función para cargar imagen de perfil del usuario actual (igual que en index)
+  const fetchUserProfileImage = async (userId: string): Promise<void> => {
+    try {
+      const { data, error } = await supabase
+        .from('perfil_usuario')
+        .select('foto_url')
+        .eq('id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile image:', error)
+        return
+      }
+
+      if (data?.foto_url) {
+        const imageUrl = buildProfileImageUrl(data.foto_url)
+        setUserProfileImage(imageUrl)
+      } else {
+        setUserProfileImage(null)
+      }
+    } catch (err) {
+      console.error('Error fetching profile image:', err)
+      setUserProfileImage(null)
+    }
+  }
 
   useEffect(() => {
     const obtenerUsuario = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) setUser(session.user)
+      if (session?.user) {
+        setUser(session.user)
+        fetchUserProfileImage(session.user.id)
+      }
     }
     obtenerUsuario()
   }, [])
@@ -69,8 +137,12 @@ export default function LugarDetalle() {
           .eq('lugar_id', id)
           .order('fecha', { ascending: false })
 
-        if (error) console.error("Error al obtener comentarios:", error)
-        setComentarios(data || [])
+        if (error) {
+          console.error("Error al obtener comentarios:", error)
+        } else {
+          console.log("Comentarios obtenidos:", data) // Para debugging
+          setComentarios(data || [])
+        }
       }
 
       fetchLugar()
@@ -126,6 +198,7 @@ export default function LugarDetalle() {
               width={1200}
               height={400}
               className="w-full h-72 md:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
+              onError={handleImageError}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
@@ -204,55 +277,72 @@ export default function LugarDetalle() {
             {/* Lista de comentarios mejorada */}
             <div className="space-y-6 mb-8">
               {comentarios.length > 0 ? (
-                comentarios.map((c, index) => (
-                  <div 
-                    key={c.id} 
-                    className="group bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/30 rounded-2xl p-6 border border-slate-200/50 dark:border-slate-600/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-500"
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                      animation: 'fadeInUp 0.6s ease-out forwards'
-                    }}
-                  >
-                    <div className="flex items-start gap-5">
-                      <div className="relative">
-                        <Image
-                          src={c.perfil_usuario?.foto_url || '/default-avatar.png'}
-                          alt="avatar"
-                          width={56}
-                          height={56}
-                          className="w-14 h-14 rounded-2xl object-cover border-3 border-gradient-to-r from-blue-400 to-purple-500 shadow-lg group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-700 shadow-sm"></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-3">
-                          <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate">
-                            {c.perfil_usuario?.nombre?.trim()
-                              ? c.perfil_usuario.nombre
-                              : c.usuario_id?.substring(0, 8) || 'Viajero Anónimo'}
-                          </h4>
-                          <div className="flex items-center gap-2 bg-white/60 dark:bg-slate-600/60 rounded-full px-3 py-1 backdrop-blur-sm">
-                            <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                              {new Date(c.fecha).toLocaleDateString('es-MX', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric'
-                              })}
-                            </span>
+                comentarios.map((c, index) => {
+                  const avatarUrl = buildProfileImageUrl(c.perfil_usuario?.foto_url)
+                  console.log('Avatar URL para comentario:', c.id, avatarUrl) // Para debugging
+                  
+                  return (
+                    <div 
+                      key={c.id} 
+                      className="group bg-gradient-to-r from-slate-50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/30 rounded-2xl p-6 border border-slate-200/50 dark:border-slate-600/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-500"
+                      style={{
+                        animationDelay: `${index * 100}ms`,
+                        animation: 'fadeInUp 0.6s ease-out forwards'
+                      }}
+                    >
+                      <div className="flex items-start gap-5">
+                        <div className="relative">
+                          <div 
+                            className="w-14 h-14 rounded-2xl border-3 border-gradient-to-r from-blue-400 to-purple-500 shadow-lg group-hover:scale-110 transition-transform duration-300 overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center"
+                          >
+                            {avatarUrl ? (
+                              <Image
+                                src={avatarUrl}
+                                alt="avatar"
+                                width={56}
+                                height={56}
+                                className="w-full h-full object-cover"
+                                onError={handleAvatarError}
+                              />
+                            ) : null}
+                            <div 
+                              className={`avatar-fallback ${avatarUrl ? 'hidden' : 'flex'} w-full h-full items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold`}
+                            >
+                              👤
+                            </div>
                           </div>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-700 shadow-sm"></div>
                         </div>
-                        <div className="bg-white/50 dark:bg-slate-600/30 rounded-xl p-4 backdrop-blur-sm">
-                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                            {c.comentario}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-3">
+                            <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate">
+                              {c.perfil_usuario?.nombre?.trim()
+                                ? c.perfil_usuario.nombre
+                                : c.usuario_id?.substring(0, 8) || 'Viajero Anónimo'}
+                            </h4>
+                            <div className="flex items-center gap-2 bg-white/60 dark:bg-slate-600/60 rounded-full px-3 py-1 backdrop-blur-sm">
+                              <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                                {new Date(c.fecha).toLocaleDateString('es-MX', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="bg-white/50 dark:bg-slate-600/30 rounded-xl p-4 backdrop-blur-sm">
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                              {c.comentario}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <div className="text-center py-16">
                   <div className="relative mx-auto mb-6">
@@ -278,13 +368,28 @@ export default function LugarDetalle() {
               <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-700/30 dark:to-slate-600/30 rounded-2xl p-6 border-t-2 border-gradient-to-r from-blue-200 to-purple-200 dark:border-slate-600">
                 <div className="flex gap-5">
                   <div className="relative">
-                    <Image
-                      src="/default-avatar.png"
-                      alt="Tu avatar"
-                      width={48}
-                      height={48}
-                      className="w-12 h-12 rounded-2xl object-cover border-2 border-blue-300 dark:border-blue-500 shadow-lg"
-                    />
+                    <div className="w-12 h-12 rounded-2xl border-2 border-blue-300 dark:border-blue-500 shadow-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center">
+                      {userProfileImage ? (
+                        <Image
+                          src={userProfileImage}
+                          alt="Tu avatar"
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement
+                            img.style.display = 'none'
+                            const fallback = img.nextSibling as HTMLElement
+                            if (fallback) fallback.style.display = 'flex'
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`${userProfileImage ? 'hidden' : 'flex'} w-full h-full items-center justify-center text-blue-600 dark:text-blue-400 text-lg font-bold`}
+                      >
+                        👤
+                      </div>
+                    </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-700"></div>
                   </div>
                   <div className="flex-1">

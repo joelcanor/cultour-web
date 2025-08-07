@@ -96,6 +96,18 @@ export default function Recomendaciones(props: RecomendacionesProps) {
     return R * c
   }
 
+  // Función para manejar errores de imagen (igual que en index)
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>): void => {
+    const target = e.target as HTMLImageElement
+    target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
+    target.style.display = 'flex'
+    target.style.alignItems = 'center'
+    target.style.justifyContent = 'center'
+    target.style.color = 'white'
+    target.style.fontSize = '2rem'
+    target.innerHTML = '📸'
+  }
+
   const renderTarjetas = (lugares: Lugar[]) => (
     <div style={{
       display: 'grid',
@@ -114,7 +126,7 @@ export default function Recomendaciones(props: RecomendacionesProps) {
         }}
           onClick={() => window.location.href = `/lugares/${lugar.id}`}>
           <Image 
-            src={lugar.url_imagen.replace('yiaplotfopkyasrkhjhf', 'yiaplofsopkyasrkhjhf').replace('//', '/')}
+            src={lugar.url_imagen}
             alt={lugar.nombre} 
             width={300}
             height={200}
@@ -122,7 +134,8 @@ export default function Recomendaciones(props: RecomendacionesProps) {
               width: '100%',
               height: '200px',
               objectFit: 'cover'
-            }} 
+            }}
+            onError={handleImageError}
           />
           <div style={{ padding: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', color: '#004e92' }}>{lugar.nombre}</h3>
