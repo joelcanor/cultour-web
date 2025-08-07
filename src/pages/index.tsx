@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, MouseEvent } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
@@ -29,10 +29,6 @@ interface CarouselProps {
   favoritos: string[]
   toggleFavorito: (lugarId: string, e?: MouseEvent<HTMLDivElement>) => Promise<void>
   isDarkMode: boolean
-}
-
-interface ImageErrorEvent extends Event {
-  target: HTMLImageElement & EventTarget
 }
 
 const municipios: string[] = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
@@ -74,7 +70,7 @@ const InfiniteCarousel = ({ places, favoritos, toggleFavorito, isDarkMode }: Car
     }
   }, [isHovered, places.length, itemWidth])
 
-  const handleImageError = (e: ImageErrorEvent): void => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>): void => {
     const target = e.target as HTMLImageElement
     target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
     target.style.display = 'flex'
@@ -493,7 +489,7 @@ export default function Home() {
     e.currentTarget.style.backgroundColor = color
   }
 
-  const handleImageError = (e: ImageErrorEvent): void => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>): void => {
     const target = e.target as HTMLImageElement
     target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
     target.style.display = 'flex'
@@ -725,7 +721,7 @@ export default function Home() {
                           objectFit: 'cover',
                           borderRadius: '50%'
                         }}
-                        onError={(e: ImageErrorEvent) => {
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
                           const nextSibling = target.nextSibling as HTMLElement

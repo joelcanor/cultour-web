@@ -8,18 +8,21 @@ export default function PerfilPage() {
   const [user, setUser] = useState<User | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [dragActive, setDragActive] = useState(false)
+  const [dragActive, setDragActive] = useState<boolean>(false)
   
   // Nuevos estados para los campos editables
   const [nombre, setNombre] = useState<string>('')
   const [telefono, setTelefono] = useState<string>('')
-  const [loadingProfile, setLoadingProfile] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState<boolean>(false)
+  
+  // Estados para el Layout
+  const [showUserMenu, setShowUserMenu] = useState<boolean>(false)
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUser = async (): Promise<void> => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setUser(session.user)
@@ -30,7 +33,7 @@ export default function PerfilPage() {
     getUser()
   }, [])
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string): Promise<void> => {
     try {
       const { data, error } = await supabase
         .from('perfil_usuario')
@@ -53,7 +56,7 @@ export default function PerfilPage() {
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
       
@@ -83,7 +86,7 @@ export default function PerfilPage() {
     }
   }
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = (e: React.DragEvent): void => {
     e.preventDefault()
     e.stopPropagation()
     if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -93,7 +96,7 @@ export default function PerfilPage() {
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent): void => {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
@@ -124,7 +127,7 @@ export default function PerfilPage() {
     }
   }
 
-  const handleUpload = async () => {
+  const handleUpload = async (): Promise<void> => {
     if (!file || !user) return
     
     setLoading(true)
@@ -172,7 +175,7 @@ export default function PerfilPage() {
     }
   }
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (): Promise<void> => {
     if (!user) return
     
     setLoadingProfile(true)
@@ -200,33 +203,45 @@ export default function PerfilPage() {
     }
   }
 
-  const removeImage = () => {
+  const removeImage = (): void => {
     setFile(null)
     setImageUrl(null)
     setError(null)
     setSuccess(null)
   }
 
+  const handleLogout = async (): Promise<void> => {
+    await supabase.auth.signOut()
+    setShowUserMenu(false)
+    // Redirigir o actualizar estado según sea necesario
+  }
+
   // Función para manejar hover de label
-  const handleLabelMouseEnter = (e: React.MouseEvent<HTMLLabelElement>) => {
+  const handleLabelMouseEnter = (e: React.MouseEvent<HTMLLabelElement>): void => {
     (e.target as HTMLLabelElement).style.transform = 'translateY(-2px)'
   }
 
-  const handleLabelMouseLeave = (e: React.MouseEvent<HTMLLabelElement>) => {
+  const handleLabelMouseLeave = (e: React.MouseEvent<HTMLLabelElement>): void => {
     (e.target as HTMLLabelElement).style.transform = 'translateY(0)'
   }
 
   // Funciones para el hover de inputs
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>): void => {
     (e.target as HTMLInputElement).style.borderColor = '#00a86b'
   }
 
-  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
     (e.target as HTMLInputElement).style.borderColor = '#e9ecef'
   }
 
   return (
-    <Layout user={user} isAuthenticated={true}>
+    <Layout 
+      user={user} 
+      isAuthenticated={!!user}
+      showUserMenu={showUserMenu}
+      setShowUserMenu={setShowUserMenu}
+      handleLogout={handleLogout}
+    >
       <div style={{
         minHeight: 'calc(100vh - 120px)',
         background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',

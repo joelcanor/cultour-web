@@ -2,11 +2,32 @@ import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
+import type { User } from '@supabase/supabase-js'
 
-export default function Recomendaciones(props) {
+// Define los tipos para los lugares
+interface Lugar {
+  id: string;
+  nombre: string;
+  municipio: string;
+  descripcion: string;
+  url_imagen: string;
+  latitud: number;
+  longitud: number;
+  distancia?: number; // Opcional porque se calcula dinámicamente
+}
+
+interface RecomendacionesProps {
+  user: User | null;
+  isAuthenticated: boolean;
+  showUserMenu: boolean;
+  setShowUserMenu: (show: boolean) => void;
+  handleLogout: () => void;
+}
+
+export default function Recomendaciones(props: RecomendacionesProps) {
   const { user } = props
-  const [recomendacionesIA, setRecomendacionesIA] = useState([])
-  const [lugaresCercanos, setLugaresCercanos] = useState([])
+  const [recomendacionesIA, setRecomendacionesIA] = useState<Lugar[]>([])
+  const [lugaresCercanos, setLugaresCercanos] = useState<Lugar[]>([])
 
   useEffect(() => {
     const fetchRecomendacionesIA = async () => {
@@ -29,7 +50,7 @@ export default function Recomendaciones(props) {
   }, [user])
 
   useEffect(() => {
-    const fetchLugaresCercanos = async (lat, lon) => {
+    const fetchLugaresCercanos = async (lat: number, lon: number) => {
       const { data, error } = await supabase
         .from('lugares')
         .select('id, nombre, municipio, descripcion, url_imagen, latitud, longitud')
@@ -63,7 +84,7 @@ export default function Recomendaciones(props) {
     )
   }, [])
 
-  function calcularDistancia(lat1, lon1, lat2, lon2) {
+  function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371
     const dLat = (lat2 - lat1) * Math.PI / 180
     const dLon = (lon2 - lon1) * Math.PI / 180
@@ -75,7 +96,7 @@ export default function Recomendaciones(props) {
     return R * c
   }
 
-  const renderTarjetas = (lugares) => (
+  const renderTarjetas = (lugares: Lugar[]) => (
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -92,11 +113,17 @@ export default function Recomendaciones(props) {
           cursor: 'pointer'
         }}
           onClick={() => window.location.href = `/lugares/${lugar.id}`}>
-          <Image src={lugar.url_imagen} alt={lugar.nombre} style={{
-            width: '100%',
-            height: '200px',
-            objectFit: 'cover'
-          }} />
+          <Image 
+            src={lugar.url_imagen} 
+            alt={lugar.nombre} 
+            width={300}
+            height={200}
+            style={{
+              width: '100%',
+              height: '200px',
+              objectFit: 'cover'
+            }} 
+          />
           <div style={{ padding: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', color: '#004e92' }}>{lugar.nombre}</h3>
             <p style={{ margin: 0, color: '#555' }}>{lugar.descripcion}</p>

@@ -1,6 +1,16 @@
 import Layout from '@/components/Layout'
+import { MouseEvent } from 'react'
+import type { User } from '@supabase/supabase-js'
 
-export default function Nosotros(props) {
+interface NosotrosProps {
+  user: User | null
+  isAuthenticated: boolean
+  showUserMenu: boolean
+  setShowUserMenu: (value: boolean) => void
+  handleLogout: () => void
+}
+
+export default function Nosotros(props: NosotrosProps) {
   return (
     <Layout {...props}>
       <div style={{ 
@@ -392,13 +402,13 @@ export default function Nosotros(props) {
               transition: 'all 0.3s ease',
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
             }}
-            onMouseEnter={e => {
-              e.target.style.transform = 'translateY(-2px)'
-              e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)'
+            onMouseEnter={(e: MouseEvent<HTMLButtonElement>) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)'
             }}
-            onMouseLeave={e => {
-              e.target.style.transform = 'translateY(0px)'
-              e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)'
+            onMouseLeave={(e: MouseEvent<HTMLButtonElement>) => {
+              e.currentTarget.style.transform = 'translateY(0px)'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)'
             }}
           >
             Más Información 📱
