@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { motion } from 'framer-motion'
 import ReCAPTCHA from 'react-google-recaptcha'
 import Image from 'next/image'
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter()
@@ -343,13 +344,6 @@ export default function LoginPage() {
     gap: 'clamp(0.6rem, 1.5vw, 0.8rem)' 
   }
 
-  const createAccountButtonStyle: React.CSSProperties = { 
-    ...oauthButtonStyle, 
-    background: 'linear-gradient(to right, #004e92, #00a86b)', 
-    color: 'white',
-    border: 'none'
-  }
-
   const modalStyle: React.CSSProperties = {
     padding: 'clamp(1.5rem, 5vw, 2.5rem)',
     borderRadius: 'clamp(1rem, 3vw, 1.5rem)',
@@ -468,7 +462,11 @@ export default function LoginPage() {
               onClick={() => setShowPassword(!showPassword)}
               style={passwordToggleStyle}
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? (
+                <FaEye color="#004e92" size={22} />
+              ) : (
+                <FaEyeSlash color="#004e92" size={22} />
+              )}
             </button>
           </div>
 
@@ -593,25 +591,6 @@ export default function LoginPage() {
               style={imageStyle}
             />
             Iniciar con Google
-          </motion.button>
-
-          <motion.button
-            onClick={handleGoToRegister}
-            style={createAccountButtonStyle}
-            whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0, 78, 146, 0.3)' }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Image
-              src="https://cdn-icons-png.flaticon.com/512/847/847969.png" 
-              alt="Registro" 
-              width={20}
-              height={20}
-              style={{ 
-                ...imageStyle,
-                filter: 'brightness(0) invert(1)' // Para hacerlo blanco en fondo oscuro
-              }}
-            />
-            Crear Nueva Cuenta
           </motion.button>
         </div>
       </motion.div>

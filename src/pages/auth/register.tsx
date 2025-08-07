@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabaseClient'
 import { motion } from 'framer-motion'
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
 
 interface FormData {
   username: string
@@ -174,8 +175,14 @@ export default function RegisterPage() {
     }
   }
 
+  const inputContainerStyle = {
+    position: 'relative' as const,
+    display: 'flex',
+    alignItems: 'center'
+  }
+
   const inputStyle = (hasError: boolean) => ({
-    padding: '1rem 1.2rem',
+    padding: '1rem 1.2rem 1rem 3.5rem',
     border: `2px solid ${hasError ? '#ef4444' : '#e5e7eb'}`,
     borderRadius: '0.75rem',
     fontSize: '1rem',
@@ -183,7 +190,28 @@ export default function RegisterPage() {
     transition: 'all 0.3s ease',
     backgroundColor: '#fafafa',
     boxShadow: hasError ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : 'none',
+    width: '100%'
   })
+
+  const iconStyle = {
+    position: 'absolute' as const,
+    left: '1.2rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#6b7280',
+    zIndex: 1
+  }
+
+  const passwordToggleStyle = {
+    position: 'absolute' as const,
+    right: '1rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '0.25rem'
+  }
 
   const buttonStyle = {
     background: isLoading 
@@ -285,13 +313,16 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <input
-              name="username"
-              placeholder="Nombre de usuario"
-              value={form.username}
-              onChange={handleChange}
-              style={inputStyle(!!errors.username)}
-            />
+            <div style={inputContainerStyle}>
+              <FaUser style={iconStyle} size={18} />
+              <input
+                name="username"
+                placeholder="Nombre de usuario"
+                value={form.username}
+                onChange={handleChange}
+                style={inputStyle(!!errors.username)}
+              />
+            </div>
             {errors.username && (
               <motion.p 
                 initial={{ opacity: 0, y: -10 }} 
@@ -304,14 +335,17 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <input
-              name="email"
-              type="email"
-              placeholder="Correo electrónico"
-              value={form.email}
-              onChange={handleChange}
-              style={inputStyle(!!errors.email)}
-            />
+            <div style={inputContainerStyle}>
+              <FaEnvelope style={iconStyle} size={18} />
+              <input
+                name="email"
+                type="email"
+                placeholder="Correo electrónico"
+                value={form.email}
+                onChange={handleChange}
+                style={inputStyle(!!errors.email)}
+              />
+            </div>
             {errors.email && (
               <motion.p 
                 initial={{ opacity: 0, y: -10 }} 
@@ -324,13 +358,16 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <input
-              name="phone"
-              placeholder="+52 1234567890"
-              value={form.phone}
-              onChange={handleChange}
-              style={inputStyle(!!errors.phone)}
-            />
+            <div style={inputContainerStyle}>
+              <FaPhone style={iconStyle} size={18} />
+              <input
+                name="phone"
+                placeholder="+52 1234567890"
+                value={form.phone}
+                onChange={handleChange}
+                style={inputStyle(!!errors.phone)}
+              />
+            </div>
             {errors.phone && (
               <motion.p 
                 initial={{ opacity: 0, y: -10 }} 
@@ -342,32 +379,29 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <div style={{ position: 'relative' }}>
-            <input
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Contraseña (mín. 8 caracteres)"
-              value={form.password}
-              onChange={handleChange}
-              style={inputStyle(!!errors.password)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '1.2rem',
-                color: '#6b7280'
-              }}
-            >
-              {showPassword ? '🙈' : '👁️'}
-            </button>
+          <div>
+            <div style={inputContainerStyle}>
+              <FaLock style={iconStyle} size={18} />
+              <input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Contraseña (mín. 8 caracteres)"
+                value={form.password}
+                onChange={handleChange}
+                style={inputStyle(!!errors.password)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={passwordToggleStyle}
+              >
+                {showPassword ? (
+                  <FaEye color="#004e92" size={22} />
+                ) : (
+                  <FaEyeSlash color="#004e92" size={22} />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <motion.p 
                 initial={{ opacity: 0, y: -10 }} 
@@ -379,32 +413,29 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <div style={{ position: 'relative' }}>
-            <input
-              name="confirmPassword"
-              type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="Confirmar contraseña"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              style={inputStyle(!!errors.confirmPassword)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={{
-                position: 'absolute',
-                right: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '1.2rem',
-                color: '#6b7280'
-              }}
-            >
-              {showConfirmPassword ? '🙈' : '👁️'}
-            </button>
+          <div>
+            <div style={inputContainerStyle}>
+              <FaLock style={iconStyle} size={18} />
+              <input
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Confirmar contraseña"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                style={inputStyle(!!errors.confirmPassword)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={passwordToggleStyle}
+              >
+                {showConfirmPassword ? (
+                  <FaEye color="#004e92" size={22} />
+                ) : (
+                  <FaEyeSlash color="#004e92" size={22} />
+                )}
+              </button>
+            </div>
             {errors.confirmPassword && (
               <motion.p 
                 initial={{ opacity: 0, y: -10 }} 

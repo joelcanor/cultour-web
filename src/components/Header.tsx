@@ -1,32 +1,43 @@
 import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
+import type { User } from '@supabase/supabase-js'
 
 type HeaderProps = {
-  user: {
-  id: string
-  email?: string
-  name?: string
-} | null
-  isAuthenticated: boolean
-  showUserMenu: boolean
-  setShowUserMenu: (value: boolean) => void
-  handleLogout: () => void
+  // Mantenemos las props opcionales por compatibilidad
+  user?: {
+    id: string
+    email?: string
+    name?: string
+  } | null
+  isAuthenticated?: boolean
+  showUserMenu?: boolean
+  setShowUserMenu?: (value: boolean) => void
+  handleLogout?: () => void
 }
 
-export default function Header({
-  user,
-  isAuthenticated,
-  showUserMenu,
-  setShowUserMenu,
-  handleLogout
-}: HeaderProps) {
+export default function Header(props: HeaderProps) {
   const router = useRouter()
+  
+  // ✅ Estado local independiente para el header
+  const [localUser, setLocalUser] = useState<{id: string, email?: string, name?: string} | null>(null)
+  const [localIsAuthenticated, setLocalIsAuthenticated] = useState<boolean>(false)
+  const [localShowUserMenu, setLocalShowUserMenu] = useState<boolean>(false)
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // ✅ Función para construir URL de imagen de perfil (igual que en index)
+  // Usar el estado local o las props (prioridad al estado local)
+  const user = localUser || props.user
+  const isAuthenticated = localIsAuthenticated || props.isAuthenticated || false
+  const showUserMenu = localShowUserMenu || props.showUserMenu || false
+  
+  const setShowUserMenu = (value: boolean) => {
+    setLocalShowUserMenu(value)
+    if (props.setShowUserMenu) props.setShowUserMenu(value)
+  }
+
+  // ✅ Función para construir URL de imagen de perfil
   const buildProfileImageUrl = (foto_url: string | null | undefined): string | null => {
     if (!foto_url) return null
     
@@ -39,8 +50,8 @@ export default function Header({
     }
   }
 
-  // ✅ Función para cargar imagen de perfil del usuario
-  const fetchUserProfileImage = async (userId: string) => {
+  // ✅ Función para cargar imagen de perfil del usuario (ahora con useCallback)
+  const fetchUserProfileImage = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('perfil_usuario')
@@ -54,9 +65,8 @@ export default function Header({
       }
 
       if (data?.foto_url) {
-        // ✅ Usar la función para construir la URL correctamente
         const imageUrl = buildProfileImageUrl(data.foto_url)
-        console.log('Image URL construida en Header:', imageUrl) // Para debugging
+        console.log('Image URL construida en Header:', imageUrl)
         setUserProfileImage(imageUrl)
       } else {
         setUserProfileImage(null)
@@ -65,7 +75,45 @@ export default function Header({
       console.error('Error fetching profile image:', err)
       setUserProfileImage(null)
     }
-  }
+  }, [])
+
+  // ✅ NUEVA: Verificación independiente de autenticación
+  useEffect(() => {
+    let subscription: { unsubscribe: () => void } | undefined
+
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setLocalIsAuthenticated(true)
+        setLocalUser(session.user as User) // ✅ Tipo específico en lugar de any
+        fetchUserProfileImage(session.user.id)
+      } else {
+        setLocalIsAuthenticated(false)
+        setLocalUser(null)
+        setUserProfileImage(null)
+      }
+
+      // Suscribirse a cambios de autenticación
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setLocalIsAuthenticated(!!session?.user)
+        setLocalUser(session?.user as User ?? null) // ✅ Tipo específico en lugar de any
+
+        if (session?.user) {
+          fetchUserProfileImage(session.user.id)
+        } else {
+          setUserProfileImage(null)
+        }
+      })
+
+      subscription = data.subscription
+    }
+
+    checkAuth()
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [fetchUserProfileImage]) // ✅ Agregada dependencia
 
   // ✅ Cargar imagen de perfil cuando cambia el usuario
   useEffect(() => {
@@ -74,7 +122,28 @@ export default function Header({
     } else {
       setUserProfileImage(null)
     }
-  }, [user])
+  }, [user, fetchUserProfileImage]) // ✅ Agregada dependencia
+
+  // ✅ Función de logout mejorada
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      setLocalIsAuthenticated(false)
+      setLocalUser(null)
+      setUserProfileImage(null)
+      setShowUserMenu(false)
+      
+      // Si hay una función de logout externa, llamarla también
+      if (props.handleLogout) {
+        props.handleLogout()
+      }
+      
+      // Redirigir al home
+      router.push('/')
+    } catch (error) {
+      console.error('Error during logout:', error)
+    }
+  }
 
   const navItems = [
     { name: 'Inicio', href: '/' },
@@ -224,14 +293,13 @@ export default function Header({
                           borderRadius: '50%' 
                         }}
                         onError={(e) => {
-                          console.error('Error loading image in Header:', userProfileImage) // Para debugging
+                          console.error('Error loading image in Header:', userProfileImage)
                           const img = e.target as HTMLImageElement
                           img.style.display = 'none'
                           const nextElement = img.nextSibling as HTMLElement
                           if (nextElement) {
                             nextElement.style.display = 'flex'
                           }
-                          // Opcional: limpiar la imagen problemática
                           setUserProfileImage(null)
                         }}
                       />

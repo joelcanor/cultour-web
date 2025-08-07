@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image'
 import type { User } from '@supabase/supabase-js'
@@ -76,8 +76,8 @@ export default function LugarDetalle() {
     }
   }
 
-  // Función para cargar imagen de perfil del usuario actual (igual que en index)
-  const fetchUserProfileImage = async (userId: string): Promise<void> => {
+  // ✅ Función para cargar imagen de perfil del usuario actual (ahora con useCallback)
+  const fetchUserProfileImage = useCallback(async (userId: string): Promise<void> => {
     try {
       const { data, error } = await supabase
         .from('perfil_usuario')
@@ -100,7 +100,7 @@ export default function LugarDetalle() {
       console.error('Error fetching profile image:', err)
       setUserProfileImage(null)
     }
-  }
+  }, [])
 
   useEffect(() => {
     const obtenerUsuario = async () => {
@@ -111,7 +111,7 @@ export default function LugarDetalle() {
       }
     }
     obtenerUsuario()
-  }, [])
+  }, [fetchUserProfileImage]) // ✅ Agregada dependencia
 
   useEffect(() => {
     if (id && typeof id === 'string') {
