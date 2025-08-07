@@ -4,16 +4,61 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// Definir interfaces para tipar los datos
+interface Usuario {
+  id: string
+  email: string
+  nombre?: string
+  telefono?: string
+  rol: 'admin' | 'usuario'
+  fecha_registro?: string
+  foto_url?: string
+  avatar_url?: string
+}
+
+interface UsuarioRPC {
+  id: string
+  email: string
+  nombre?: string
+  telefono?: string
+  rol?: 'admin' | 'usuario'
+  fecha_registro?: string
+  avatar_url?: string
+  foto_url?: string
+}
+
+interface AdminInfo {
+  id: string
+  nombre?: string
+  email: string
+  rol: string
+}
+
+interface Stats {
+  total: number
+  admins: number
+  usuarios: number
+  recientes: number
+}
+
+interface NewUser {
+  email: string
+  password: string
+  nombre: string
+  telefono: string
+  rol: 'admin' | 'usuario'
+}
+
 export default function UsuariosAdmin() {
-  const [usuarios, setUsuarios] = useState([])
-  const [filteredUsuarios, setFilteredUsuarios] = useState([])
-  const [adminInfo, setAdminInfo] = useState(null)
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([])
+  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRol, setFilterRol] = useState('Todos')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creatingUser, setCreatingUser] = useState(false)
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     admins: 0,
     usuarios: 0,
@@ -21,7 +66,7 @@ export default function UsuariosAdmin() {
   })
   
   // Estado para el formulario de creación
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<NewUser>({
     email: '',
     password: '',
     nombre: '',
@@ -32,9 +77,9 @@ export default function UsuariosAdmin() {
   const router = useRouter()
 
   const handleLogout = async () => {
-  await supabase.auth.signOut()
-  router.push('/') // o '/login', como prefieras
-}
+    await supabase.auth.signOut()
+    router.push('/') // o '/login', como prefieras
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,8 +107,8 @@ export default function UsuariosAdmin() {
         if (error) {
           console.error('Error al obtener usuarios:', error)
         } else {
-          // Normalizar datos
-          const usuariosNormalizados = (data || []).map(u => ({
+          // Normalizar datos - ahora con tipado explícito
+          const usuariosNormalizados = (data as UsuarioRPC[] || []).map((u: UsuarioRPC): Usuario => ({
             ...u,
             rol: u.rol || 'usuario',
             nombre: u.nombre || '',
@@ -112,7 +157,7 @@ export default function UsuariosAdmin() {
   }, [searchTerm, filterRol, usuarios])
 
   // Función para crear nuevo usuario
-  const crearUsuario = async (e) => {
+  const crearUsuario = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!newUser.email || !newUser.password) {
@@ -157,7 +202,7 @@ export default function UsuariosAdmin() {
         }
 
         // 3. Actualizar lista local
-        const nuevoUsuario = {
+        const nuevoUsuario: Usuario = {
           id: authData.user.id,
           email: newUser.email,
           nombre: newUser.nombre,
@@ -189,15 +234,16 @@ export default function UsuariosAdmin() {
         
         alert('Usuario creado exitosamente')
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       console.error('Error al crear usuario:', error)
-      alert('Error al crear usuario: ' + error.message)
+      alert('Error al crear usuario: ' + errorMessage)
     } finally {
       setCreatingUser(false)
     }
   }
 
-  const cambiarRol = async (id, nuevoRol) => {
+  const cambiarRol = async (id: string, nuevoRol: 'admin' | 'usuario') => {
     const { error } = await supabase
       .from('perfil_usuario')
       .update({ rol: nuevoRol })
@@ -219,7 +265,7 @@ export default function UsuariosAdmin() {
     }
   }
 
-  const eliminarUsuario = async (id) => {
+  const eliminarUsuario = async (id: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.')) {
       return
     }
@@ -277,9 +323,9 @@ export default function UsuariosAdmin() {
           <Image 
             src="/logo.jpg" 
             alt="Cultour Logo" 
+            width={80}
+            height={80}
             style={{ 
-              width: '80px', 
-              height: '80px', 
               borderRadius: '50%', 
               marginBottom: '0.5rem',
               border: '3px solid rgba(255,255,255,0.3)',
@@ -326,13 +372,12 @@ export default function UsuariosAdmin() {
                 🏠 Ir al Sitio Web
               </Link>
             </li>
-                        <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-  <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
-    🔒 Cerrar Sesión
-  </button>
-</li>
+            <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+              <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
+                🔒 Cerrar Sesión
+              </button>
+            </li>
           </ul>
-          
         </nav>
       </aside>
 
@@ -477,9 +522,12 @@ export default function UsuariosAdmin() {
                       <Image
                         src={user.foto_url || '/logo.jpg'}
                         alt="avatar"
-                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.src = '/logo.jpg'
+                        width={40}
+                        height={40}
+                        style={{ borderRadius: '50%', objectFit: 'cover' }}
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/logo.jpg'
                         }}
                       />
                     </td>
@@ -583,7 +631,7 @@ export default function UsuariosAdmin() {
                   style={inputStyle}
                   required
                   placeholder="Mínimo 6 caracteres"
-                  minLength="6"
+                  minLength={6}
                 />
               </div>
 
@@ -613,7 +661,7 @@ export default function UsuariosAdmin() {
                 <label style={labelStyle}>Rol</label>
                 <select
                   value={newUser.rol}
-                  onChange={(e) => setNewUser({...newUser, rol: e.target.value})}
+                  onChange={(e) => setNewUser({...newUser, rol: e.target.value as 'admin' | 'usuario'})}
                   style={inputStyle}
                 >
                   <option value="usuario">👤 Usuario Regular</option>
@@ -660,7 +708,7 @@ const sidebarStyle = {
   color: 'white',
   padding: '2rem 1.5rem',
   boxShadow: '4px 0 20px rgba(0,0,0,0.15)',
-  position: 'relative'
+  position: 'relative' as const
 }
 
 const linkStyle = {
@@ -787,7 +835,7 @@ const createButtonStyle = {
 }
 
 const emptyStateStyle = {
-  textAlign: 'center',
+  textAlign: 'center' as const,
   padding: '4rem 2rem',
   color: '#666'
 }
@@ -795,7 +843,7 @@ const emptyStateStyle = {
 const th = {
   borderBottom: '2px solid #ccc',
   padding: '0.8rem',
-  textAlign: 'left',
+  textAlign: 'left' as const,
   background: '#f0f0f0',
   fontSize: '0.9rem',
   fontWeight: 'bold',
@@ -827,7 +875,7 @@ const smallButtonStyle = {
 
 // Nuevos estilos para el modal
 const modalOverlayStyle = {
-  position: 'fixed',
+  position: 'fixed' as const,
   top: 0,
   left: 0,
   right: 0,
@@ -890,7 +938,7 @@ const inputStyle = {
   border: '2px solid #e0e0e0',
   fontSize: '1rem',
   transition: 'border-color 0.3s ease',
-  boxSizing: 'border-box'
+  boxSizing: 'border-box' as const
 }
 
 const modalActionsStyle = {

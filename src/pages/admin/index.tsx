@@ -4,11 +4,38 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// Definir interfaces para los tipos de datos
+interface UsuarioData {
+  id: string
+  email?: string
+  nombre?: string
+  telefono?: string
+  rol?: string
+  foto_url?: string
+  avatar_url?: string
+  fecha_registro?: string
+  [key: string]: any
+}
+
+interface AdminInfo {
+  id: string
+  nombre?: string
+  foto_url?: string
+  [key: string]: any
+}
+
+interface Stats {
+  totalUsuarios: number
+  totalLugares: number
+  usuariosActivos: number
+  lugaresDestacados: number
+  visitasTotales: number
+}
+
 export default function AdminDashboard() {
-  const [usuarios, setUsuarios] = useState([])
-  // Eliminamos las variables no utilizadas
-  const [adminInfo, setAdminInfo] = useState(null)
-  const [stats, setStats] = useState({
+  const [usuarios, setUsuarios] = useState<UsuarioData[]>([])
+  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null)
+  const [stats, setStats] = useState<Stats>({
     totalUsuarios: 0,
     totalLugares: 0,
     usuariosActivos: 0,
@@ -21,6 +48,12 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/') // o a "/login" si prefieres
+  }
+
+  // Función para manejar errores de imagen
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = event.target as HTMLImageElement;
+    target.src = '/logo.jpg'
   }
 
   useEffect(() => {
@@ -45,7 +78,7 @@ export default function AdminDashboard() {
           console.error('Error al obtener usuarios:', usuariosError)
         } else {
           // Normalizar datos igual que en UsuariosAdmin
-          const usuariosNormalizados = (usuariosData || []).map(u => ({
+          const usuariosNormalizados = (usuariosData || []).map((u: UsuarioData) => ({
             ...u,
             rol: u.rol || 'usuario',
             nombre: u.nombre || '',
@@ -77,7 +110,7 @@ export default function AdminDashboard() {
 
         // Calcular estadísticas
         if (usuariosData && lugaresData) {
-          const usuariosNormalizados = (usuariosData || []).map(u => ({
+          const usuariosNormalizados = (usuariosData || []).map((u: UsuarioData) => ({
             ...u,
             rol: u.rol || 'usuario'
           }))
@@ -101,7 +134,7 @@ export default function AdminDashboard() {
     fetchData()
   }, [])
 
-  const cambiarRol = async (id, nuevoRol) => {
+  const cambiarRol = async (id: string, nuevoRol: string) => {
     const { error } = await supabase
       .from('perfil_usuario')
       .update({ rol: nuevoRol })
@@ -207,7 +240,7 @@ export default function AdminDashboard() {
               </Link>
             </li>
             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-              <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
+              <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd', width: '100%', textAlign: 'left' }}>
                 🔒 Cerrar Sesión
               </button>
             </li>
@@ -241,6 +274,7 @@ export default function AdminDashboard() {
                     borderRadius: '50%', 
                     objectFit: 'cover' 
                   }}
+                  onError={handleImageError}
                 />
               ) : (
                 <span style={{ fontSize: '1.5rem', color: 'white' }}>👤</span>
@@ -279,7 +313,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Cards de estadísticas - AHORA CON VISITAS TOTALES */}
+        {/* Cards de estadísticas */}
         <div style={statsGridStyle}>
           <div style={{...statsCardStyle, borderLeft: '4px solid #004e92'}}>
             <div style={statsIconStyle}>👥</div>
@@ -366,7 +400,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Resumen de usuarios recientes - MEJORADO */}
+        {/* Resumen de usuarios recientes */}
         <div style={recentUsersStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ color: '#004e92', margin: 0, fontSize: '1.5rem' }}>
@@ -394,7 +428,7 @@ export default function AdminDashboard() {
               <div key={usuario.id} style={userRowStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                   <Image 
-                    src={usuario.foto_url || '/default-avatar.png'} 
+                    src={usuario.foto_url || '/logo.jpg'} 
                     alt="foto" 
                     width={35}
                     height={35}
@@ -403,9 +437,7 @@ export default function AdminDashboard() {
                       objectFit: 'cover',
                       border: '2px solid #e0e0e0'
                     }} 
-                    onError={(e) => {
-                      e.target.src = '/logo.jpg'
-                    }}
+                    onError={handleImageError}
                   />
                   <div>
                     <div style={{ fontWeight: '500', color: '#333' }}>
@@ -477,14 +509,14 @@ export default function AdminDashboard() {
   )
 }
 
-// Estilos actualizados
+// Estilos completos
 const sidebarStyle = {
   width: '280px',
   background: 'linear-gradient(180deg, #004e92 0%, #003d75 100%)',
   color: 'white',
   padding: '2rem 1.5rem',
   boxShadow: '4px 0 20px rgba(0,0,0,0.15)',
-  position: 'relative'
+  position: 'relative' as const
 }
 
 const linkStyle = {
@@ -581,11 +613,11 @@ const actionButtonStyle = {
   border: '2px solid #e0e0e0',
   borderRadius: '1rem',
   padding: '1.5rem',
-  textAlign: 'center',
+  textAlign: 'center' as const,
   cursor: 'pointer',
   transition: 'all 0.3s ease',
   display: 'flex',
-  flexDirection: 'column',
+  flexDirection: 'column' as const,
   alignItems: 'center'
 }
 
@@ -598,7 +630,7 @@ const recentUsersStyle = {
 
 const usersTableStyle = {
   display: 'flex',
-  flexDirection: 'column',
+  flexDirection: 'column' as const,
   gap: '0.5rem'
 }
 

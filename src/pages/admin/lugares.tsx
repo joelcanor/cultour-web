@@ -4,16 +4,47 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// Definir interfaces para los tipos de datos
+interface LugarData {
+  id: number
+  nombre: string
+  descripcion?: string
+  municipio: string
+  url_imagen: string
+  destacado: boolean
+  latitud?: number
+  longitud?: number
+  created_at?: string
+  updated_at?: string
+}
+
+interface AdminInfo {
+  id: string
+  nombre?: string
+  foto_url?: string
+  email?: string
+  telefono?: string
+  rol?: string
+  created_at?: string
+  updated_at?: string
+}
+
+interface Stats {
+  total: number
+  destacados: number
+  porMunicipio: Record<string, number>
+}
+
 export default function LugaresAdmin() {
-  const [lugares, setLugares] = useState([])
-  const [filteredLugares, setFilteredLugares] = useState([])
-  const [adminInfo, setAdminInfo] = useState(null)
+  const [lugares, setLugares] = useState<LugarData[]>([])
+  const [filteredLugares, setFilteredLugares] = useState<LugarData[]>([])
+  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMunicipio, setFilterMunicipio] = useState('Todos')
   const [filterDestacado, setFilterDestacado] = useState('Todos')
   
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     destacados: 0,
     porMunicipio: {}
@@ -21,9 +52,9 @@ export default function LugaresAdmin() {
   const router = useRouter()
 
   const handleLogout = async () => {
-  await supabase.auth.signOut()
-  router.push('/') // o '/login', como prefieras
-}
+    await supabase.auth.signOut()
+    router.push('/') // o '/login', como prefieras
+  }
 
   const municipios = ['Todos', 'Jalpan de Serra', 'Landa de Matamoros', 'Arroyo Seco', 'Pinal de Amoles']
 
@@ -49,15 +80,16 @@ export default function LugaresAdmin() {
         if (error) {
           console.error('Error al obtener lugares:', error)
         } else {
-          setLugares(data || [])
-          setFilteredLugares(data || [])
+          const lugaresData = data as LugarData[] || []
+          setLugares(lugaresData)
+          setFilteredLugares(lugaresData)
           
           // Calcular estadísticas
-          const total = data?.length || 0
-          const destacados = data?.filter(l => l.destacado === true).length || 0
-          const porMunicipio = {}
+          const total = lugaresData.length
+          const destacados = lugaresData.filter((l: LugarData) => l.destacado === true).length
+          const porMunicipio: Record<string, number> = {}
           
-          data?.forEach(lugar => {
+          lugaresData.forEach((lugar: LugarData) => {
             porMunicipio[lugar.municipio] = (porMunicipio[lugar.municipio] || 0) + 1
           })
           
@@ -79,7 +111,7 @@ export default function LugaresAdmin() {
 
     // Filtro por término de búsqueda
     if (searchTerm) {
-      filtered = filtered.filter(lugar => 
+      filtered = filtered.filter((lugar: LugarData) => 
         lugar.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lugar.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -87,20 +119,20 @@ export default function LugaresAdmin() {
 
     // Filtro por municipio
     if (filterMunicipio !== 'Todos') {
-      filtered = filtered.filter(lugar => lugar.municipio === filterMunicipio)
+      filtered = filtered.filter((lugar: LugarData) => lugar.municipio === filterMunicipio)
     }
 
     // Filtro por destacado
     if (filterDestacado === 'Destacados') {
-      filtered = filtered.filter(lugar => lugar.destacado === true)
+      filtered = filtered.filter((lugar: LugarData) => lugar.destacado === true)
     } else if (filterDestacado === 'No destacados') {
-      filtered = filtered.filter(lugar => lugar.destacado === false)
+      filtered = filtered.filter((lugar: LugarData) => lugar.destacado === false)
     }
 
     setFilteredLugares(filtered)
   }, [searchTerm, filterMunicipio, filterDestacado, lugares])
 
-  const toggleDestacado = async (id, currentStatus) => {
+  const toggleDestacado = async (id: number, currentStatus: boolean) => {
     const { error } = await supabase
       .from('lugares')
       .update({ destacado: !currentStatus })
@@ -110,7 +142,7 @@ export default function LugaresAdmin() {
       alert('Error al cambiar estado: ' + error.message)
     } else {
       setLugares(prev =>
-        prev.map(lugar => 
+        prev.map((lugar: LugarData) => 
           lugar.id === id ? { ...lugar, destacado: !currentStatus } : lugar
         )
       )
@@ -121,6 +153,18 @@ export default function LugaresAdmin() {
         destacados: prev.destacados + (!currentStatus ? 1 : -1)
       }))
     }
+  }
+
+  // Función para manejar errores de imagen
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = event.target as HTMLImageElement;
+    target.style.display = 'flex'
+    target.style.alignItems = 'center'
+    target.style.justifyContent = 'center'
+    target.style.backgroundColor = '#f0f0f0'
+    target.style.color = '#666'
+    target.style.fontSize = '2rem'
+    target.alt = '📸'
   }
 
   if (loading) {
@@ -158,9 +202,9 @@ export default function LugaresAdmin() {
           <Image 
             src="/logo.jpg" 
             alt="Cultour Logo" 
+            width={80}
+            height={80}
             style={{ 
-              width: '80px', 
-              height: '80px', 
               borderRadius: '50%', 
               marginBottom: '0.5rem',
               border: '3px solid rgba(255,255,255,0.3)',
@@ -208,13 +252,12 @@ export default function LugaresAdmin() {
               </Link>
             </li>
              
-             <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-  <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd' }}>
-    🔒 Cerrar Sesión
-  </button>
-</li>
+            <li style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+              <button onClick={handleLogout} style={{ ...linkStyle, color: '#ffdddd', width: '100%', textAlign: 'left' }}>
+                🔒 Cerrar Sesión
+              </button>
+            </li>
           </ul>
-  
         </nav>
       </aside>
 
@@ -344,16 +387,10 @@ export default function LugaresAdmin() {
                     <Image 
                       src={lugar.url_imagen} 
                       alt={lugar.nombre} 
+                      width={350}
+                      height={200}
                       style={placeImageStyle}
-                      onError={(e) => {
-                        e.target.style.background = 'linear-gradient(135deg, #004e92, #00a86b)'
-                        e.target.style.display = 'flex'
-                        e.target.style.alignItems = 'center'
-                        e.target.style.justifyContent = 'center'
-                        e.target.style.color = 'white'
-                        e.target.style.fontSize = '2rem'
-                        e.target.innerHTML = '📸'
-                      }}
+                      onError={handleImageError}
                     />
                     
                     {/* Badge de municipio */}
@@ -376,9 +413,9 @@ export default function LugaresAdmin() {
                     </div>
                     
                     <p style={placeDescriptionStyle}>
-                      {lugar.descripcion?.length > 100 
+                      {lugar.descripcion && lugar.descripcion.length > 100 
                         ? `${lugar.descripcion.substring(0, 100)}...` 
-                        : lugar.descripcion
+                        : lugar.descripcion || 'Sin descripción disponible'
                       }
                     </p>
                     
@@ -428,7 +465,7 @@ const sidebarStyle = {
   color: 'white',
   padding: '2rem 1.5rem',
   boxShadow: '4px 0 20px rgba(0,0,0,0.15)',
-  position: 'relative'
+  position: 'relative' as const
 }
 
 const linkStyle = {
@@ -566,11 +603,11 @@ const placeCardStyle = {
 const placeImageStyle = {
   width: '100%',
   height: '200px',
-  objectFit: 'cover'
+  objectFit: 'cover' as const
 }
 
 const municipioBadgeStyle = {
-  position: 'absolute',
+  position: 'absolute' as const,
   top: '1rem',
   right: '1rem',
   background: 'rgba(0,78,146,0.9)',
@@ -582,7 +619,7 @@ const municipioBadgeStyle = {
 }
 
 const destacadoBadgeStyle = {
-  position: 'absolute',
+  position: 'absolute' as const,
   top: '1rem',
   left: '1rem',
   background: 'rgba(255,167,38,0.9)',
@@ -621,7 +658,7 @@ const placeDescriptionStyle = {
 const cardActionsStyle = {
   display: 'flex',
   gap: '0.8rem',
-  flexWrap: 'wrap'
+  flexWrap: 'wrap' as const
 }
 
 const actionButtonStyle = {
@@ -637,7 +674,7 @@ const actionButtonStyle = {
 }
 
 const emptyStateStyle = {
-  textAlign: 'center',
+  textAlign: 'center' as const,
   padding: '4rem 2rem',
   color: '#666'
 }
