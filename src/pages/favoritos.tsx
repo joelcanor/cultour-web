@@ -29,7 +29,27 @@ export default function Favoritos(props: FavoritosProps) {
   const [filtro, setFiltro] = useState<string>('')
   const [sortBy, setSortBy] = useState<'nombre' | 'municipio'>('nombre')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [windowWidth, setWindowWidth] = useState<number>(1024) // Default para SSR
   const router = useRouter()
+
+  // Hook para manejar el ancho de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+
+    // Establecer el ancho inicial solo en el cliente
+    if (typeof window !== 'undefined') {
+      setWindowWidth(window.innerWidth)
+      window.addEventListener('resize', handleResize)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!user) {
@@ -148,6 +168,10 @@ export default function Favoritos(props: FavoritosProps) {
 
   console.log('Renderizando componente - Lugares:', lugares.length, 'Filtrados:', lugaresFiltrados.length)
 
+  // Variables responsivas
+  const isMobile = windowWidth <= 768
+  const isSmallMobile = windowWidth <= 480
+
   if (!user) {
     return (
       <Layout {...props}>
@@ -207,13 +231,17 @@ export default function Favoritos(props: FavoritosProps) {
 
   return (
     <Layout {...props}>
-      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ 
+        padding: isMobile ? '1rem' : '2rem', 
+        maxWidth: '1200px', 
+        margin: '0 auto' 
+      }}>
         {/* Header de la página */}
         <div style={{
           background: 'linear-gradient(135deg, #004e92, #00a86b)',
-          borderRadius: '2rem',
-          padding: '2.5rem',
-          marginBottom: '2rem',
+          borderRadius: isMobile ? '1.5rem' : '2rem',
+          padding: isMobile ? '1.5rem' : '2.5rem',
+          marginBottom: '1.5rem',
           color: 'white',
           textAlign: 'center',
           position: 'relative',
@@ -223,8 +251,8 @@ export default function Favoritos(props: FavoritosProps) {
             position: 'absolute',
             top: '-50%',
             right: '-10%',
-            width: '200px',
-            height: '200px',
+            width: isMobile ? '120px' : '200px',
+            height: isMobile ? '120px' : '200px',
             background: 'rgba(255,255,255,0.1)',
             borderRadius: '50%'
           }}></div>
@@ -232,27 +260,32 @@ export default function Favoritos(props: FavoritosProps) {
             position: 'absolute',
             bottom: '-30%',
             left: '-5%',
-            width: '150px',
-            height: '150px',
+            width: isMobile ? '100px' : '150px',
+            height: isMobile ? '100px' : '150px',
             background: 'rgba(255,255,255,0.05)',
             borderRadius: '50%'
           }}></div>
           
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❤️</div>
+            <div style={{ 
+              fontSize: isMobile ? '2rem' : '3rem', 
+              marginBottom: '1rem' 
+            }}>❤️</div>
             <h1 style={{ 
-              fontSize: '2.5rem', 
+              fontSize: isMobile ? '1.8rem' : '2.5rem', 
               fontWeight: 'bold', 
               marginBottom: '0.5rem',
               textShadow: '0 2px 10px rgba(0,0,0,0.2)',
-              margin: 0
+              margin: 0,
+              lineHeight: '1.2'
             }}>
               Mis Lugares Favoritos
             </h1>
             <p style={{ 
-              fontSize: '1.1rem', 
+              fontSize: isMobile ? '0.9rem' : '1.1rem', 
               opacity: 0.9,
-              margin: '0.5rem 0 0 0'
+              margin: '0.5rem 0 0 0',
+              lineHeight: '1.4'
             }}>
               {lugares.length === 0 ? 'Aún no tienes lugares guardados' : `${lugares.length} lugar${lugares.length !== 1 ? 'es' : ''} guardado${lugares.length !== 1 ? 's' : ''}`}
             </p>
@@ -278,7 +311,7 @@ export default function Favoritos(props: FavoritosProps) {
               marginBottom: '1.5rem'
             }}></div>
             <p style={{ fontSize: '1.2rem', fontWeight: '500' }}>Cargando tus lugares favoritos...</p>
-            <style>{`
+            <style jsx>{`
               @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
@@ -334,21 +367,27 @@ export default function Favoritos(props: FavoritosProps) {
           </div>
         ) : (
           <>
-            {/* Controles de filtro y vista */}
+            {/* Controles de filtro y vista - Responsivo */}
             <div style={{
               display: 'flex',
-              flexWrap: 'wrap',
+              flexDirection: isMobile ? 'column' : 'row',
               gap: '1rem',
-              marginBottom: '2rem',
-              padding: '1.5rem',
+              marginBottom: '1.5rem',
+              padding: isMobile ? '1rem' : '1.5rem',
               background: 'white',
               borderRadius: '1.5rem',
               boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              alignItems: 'center',
+              alignItems: isMobile ? 'stretch' : 'center',
               justifyContent: 'space-between'
             }}>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1 }}>
-                <div style={{ position: 'relative', flex: 1, maxWidth: '300px' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '1rem', 
+                alignItems: isMobile ? 'stretch' : 'center', 
+                flex: 1 
+              }}>
+                <div style={{ position: 'relative', flex: 1, maxWidth: isMobile ? 'none' : '300px' }}>
                   <input
                     type="text"
                     placeholder="Buscar lugares..."
@@ -356,23 +395,24 @@ export default function Favoritos(props: FavoritosProps) {
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setFiltro(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '0.8rem 1rem 0.8rem 2.5rem',
+                      padding: isMobile ? '0.7rem 1rem 0.7rem 2.3rem' : '0.8rem 1rem 0.8rem 2.5rem',
                       border: '2px solid #e9ecef',
                       borderRadius: '2rem',
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '0.9rem' : '1rem',
                       outline: 'none',
-                      transition: 'all 0.3s ease'
+                      transition: 'all 0.3s ease',
+                      boxSizing: 'border-box'
                     }}
                     onFocus={(e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.style.borderColor = '#004e92'}
                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.style.borderColor = '#e9ecef'}
                   />
                   <span style={{
                     position: 'absolute',
-                    left: '1rem',
+                    left: isMobile ? '0.8rem' : '1rem',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     color: '#666',
-                    fontSize: '1.1rem'
+                    fontSize: isMobile ? '1rem' : '1.1rem'
                   }}>
                     🔍
                   </span>
@@ -382,13 +422,14 @@ export default function Favoritos(props: FavoritosProps) {
                   value={sortBy}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as 'nombre' | 'municipio')}
                   style={{
-                    padding: '0.8rem 1rem',
+                    padding: isMobile ? '0.7rem 1rem' : '0.8rem 1rem',
                     border: '2px solid #e9ecef',
                     borderRadius: '1rem',
-                    fontSize: '1rem',
+                    fontSize: isMobile ? '0.9rem' : '1rem',
                     outline: 'none',
                     cursor: 'pointer',
-                    background: 'white'
+                    background: 'white',
+                    minWidth: isMobile ? 'auto' : '200px'
                   }}
                 >
                   <option value="nombre">Ordenar por nombre</option>
@@ -396,17 +437,23 @@ export default function Favoritos(props: FavoritosProps) {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: '0.5rem',
+                justifyContent: isMobile ? 'center' : 'flex-end'
+              }}>
                 <button
                   onClick={() => setViewMode('grid')}
                   style={{
-                    padding: '0.8rem',
+                    padding: isMobile ? '0.7rem 1rem' : '0.8rem',
                     border: 'none',
                     borderRadius: '1rem',
                     cursor: 'pointer',
                     background: viewMode === 'grid' ? '#004e92' : '#f8f9fa',
                     color: viewMode === 'grid' ? 'white' : '#666',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    minWidth: isMobile ? '60px' : 'auto'
                   }}
                   title="Vista en cuadrícula"
                 >
@@ -415,13 +462,15 @@ export default function Favoritos(props: FavoritosProps) {
                 <button
                   onClick={() => setViewMode('list')}
                   style={{
-                    padding: '0.8rem',
+                    padding: isMobile ? '0.7rem 1rem' : '0.8rem',
                     border: 'none',
                     borderRadius: '1rem',
                     cursor: 'pointer',
                     background: viewMode === 'list' ? '#004e92' : '#f8f9fa',
                     color: viewMode === 'list' ? 'white' : '#666',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    minWidth: isMobile ? '60px' : 'auto'
                   }}
                   title="Vista en lista"
                 >
@@ -430,33 +479,43 @@ export default function Favoritos(props: FavoritosProps) {
               </div>
             </div>
 
-            {/* Grid o Lista de lugares */}
+            {/* Grid o Lista de lugares - Responsivo */}
             <div style={{
               display: viewMode === 'grid' ? 'grid' : 'flex',
               flexDirection: viewMode === 'list' ? 'column' : undefined,
-              gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fit, minmax(320px, 1fr))' : undefined,
-              gap: '1.5rem'
+              gridTemplateColumns: viewMode === 'grid' 
+                ? isSmallMobile 
+                  ? '1fr' 
+                  : isMobile 
+                    ? 'repeat(auto-fit, minmax(280px, 1fr))' 
+                    : 'repeat(auto-fit, minmax(320px, 1fr))'
+                : undefined,
+              gap: isMobile ? '1rem' : '1.5rem'
             }}>
               {lugaresFiltrados.map(lugar => (
                 <div 
                   key={lugar.id} 
                   style={{
                     background: 'white',
-                    borderRadius: '1.5rem',
+                    borderRadius: isMobile ? '1rem' : '1.5rem',
                     boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
                     overflow: 'hidden',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     position: 'relative',
-                    display: viewMode === 'list' ? 'flex' : 'block'
+                    display: viewMode === 'list' && !isMobile ? 'flex' : 'block'
                   }}
                   onMouseEnter={(e: MouseEvent<HTMLDivElement>) => {
-                    e.currentTarget.style.transform = 'translateY(-8px)'
-                    e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.15)'
+                    if (!isMobile) {
+                      e.currentTarget.style.transform = 'translateY(-8px)'
+                      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.15)'
+                    }
                   }}
                   onMouseLeave={(e: MouseEvent<HTMLDivElement>) => {
-                    e.currentTarget.style.transform = 'translateY(0px)'
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)'
+                    if (!isMobile) {
+                      e.currentTarget.style.transform = 'translateY(0px)'
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)'
+                    }
                   }}
                 >
                   {/* Botón de eliminar favorito */}
@@ -467,16 +526,16 @@ export default function Favoritos(props: FavoritosProps) {
                     }}
                     style={{
                       position: 'absolute',
-                      top: '1rem',
-                      right: '1rem',
+                      top: isMobile ? '0.7rem' : '1rem',
+                      right: isMobile ? '0.7rem' : '1rem',
                       background: 'rgba(220, 53, 69, 0.9)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
+                      width: isMobile ? '32px' : '40px',
+                      height: isMobile ? '32px' : '40px',
                       cursor: 'pointer',
-                      fontSize: '1.4rem',
+                      fontSize: isMobile ? '1.2rem' : '1.4rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -504,13 +563,19 @@ export default function Favoritos(props: FavoritosProps) {
                     onClick={() => router.push(`/lugares/${lugar.id}`)}
                     style={{ 
                       display: 'flex',
-                      flexDirection: viewMode === 'list' ? 'row' : 'column',
+                      flexDirection: viewMode === 'list' && !isMobile ? 'row' : 'column',
                       height: '100%'
                     }}
                   >
                     <div style={{
-                      width: viewMode === 'list' ? '250px' : '100%',
-                      height: viewMode === 'list' ? '180px' : '220px',
+                      width: viewMode === 'list' && !isMobile ? '250px' : '100%',
+                      height: isSmallMobile 
+                        ? '180px' 
+                        : isMobile 
+                          ? '200px' 
+                          : viewMode === 'list' && !isMobile 
+                            ? '180px' 
+                            : '220px',
                       flexShrink: 0,
                       position: 'relative',
                       overflow: 'hidden'
@@ -523,20 +588,28 @@ export default function Favoritos(props: FavoritosProps) {
                           objectFit: 'cover',
                           transition: 'transform 0.3s ease'
                         }}
-                        onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1)'}
+                        onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => {
+                          if (!isMobile) {
+                            e.currentTarget.style.transform = 'scale(1.05)'
+                          }
+                        }}
+                        onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => {
+                          if (!isMobile) {
+                            e.currentTarget.style.transform = 'scale(1)'
+                          }
+                        }}
                       />
                       
                       {/* Badge de favorito */}
                       <div style={{
                         position: 'absolute',
-                        bottom: '0.8rem',
-                        left: '0.8rem',
+                        bottom: isMobile ? '0.5rem' : '0.8rem',
+                        left: isMobile ? '0.5rem' : '0.8rem',
                         background: 'rgba(255, 71, 87, 0.9)',
                         color: 'white',
-                        padding: '0.4rem 0.8rem',
+                        padding: isMobile ? '0.3rem 0.6rem' : '0.4rem 0.8rem',
                         borderRadius: '1rem',
-                        fontSize: '0.85rem',
+                        fontSize: isMobile ? '0.75rem' : '0.85rem',
                         fontWeight: 'bold',
                         backdropFilter: 'blur(10px)',
                         display: 'flex',
@@ -550,15 +623,19 @@ export default function Favoritos(props: FavoritosProps) {
                       {lugar.municipio && (
                         <div style={{
                           position: 'absolute',
-                          top: '0.8rem',
-                          left: '0.8rem',
+                          top: isMobile ? '0.5rem' : '0.8rem',
+                          left: isMobile ? '0.5rem' : '0.8rem',
                           background: 'rgba(0, 168, 107, 0.9)',
                           color: 'white',
-                          padding: '0.4rem 0.8rem',
+                          padding: isMobile ? '0.3rem 0.6rem' : '0.4rem 0.8rem',
                           borderRadius: '1rem',
-                          fontSize: '0.85rem',
+                          fontSize: isMobile ? '0.75rem' : '0.85rem',
                           fontWeight: 'bold',
-                          backdropFilter: 'blur(10px)'
+                          backdropFilter: 'blur(10px)',
+                          maxWidth: isSmallMobile ? '120px' : 'auto',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}>
                           📍 {lugar.municipio}
                         </div>
@@ -566,7 +643,7 @@ export default function Favoritos(props: FavoritosProps) {
                     </div>
 
                     <div style={{ 
-                      padding: '1.5rem',
+                      padding: isMobile ? '1rem' : '1.5rem',
                       flex: 1,
                       display: 'flex',
                       flexDirection: 'column',
@@ -574,22 +651,22 @@ export default function Favoritos(props: FavoritosProps) {
                     }}>
                       <div>
                         <h3 style={{ 
-                          marginBottom: '0.8rem', 
+                          marginBottom: isMobile ? '0.5rem' : '0.8rem', 
                           color: '#004e92',
-                          fontSize: '1.4rem',
+                          fontSize: isSmallMobile ? '1.1rem' : isMobile ? '1.2rem' : '1.4rem',
                           fontWeight: 'bold',
                           lineHeight: '1.3'
                         }}>
                           {lugar.nombre}
                         </h3>
                         <p style={{ 
-                          fontSize: '1rem', 
+                          fontSize: isMobile ? '0.9rem' : '1rem', 
                           color: '#666',
                           lineHeight: '1.6',
                           margin: 0
                         }}>
-                          {lugar.descripcion?.length > 120 
-                            ? `${lugar.descripcion.substring(0, 120)}...` 
+                          {lugar.descripcion?.length > (isMobile ? 80 : 120)
+                            ? `${lugar.descripcion.substring(0, isMobile ? 80 : 120)}...` 
                             : lugar.descripcion
                           }
                         </p>
@@ -600,7 +677,7 @@ export default function Favoritos(props: FavoritosProps) {
                         padding: '0.5rem 0',
                         borderTop: '1px solid #f0f0f0',
                         color: '#00a86b',
-                        fontSize: '0.9rem',
+                        fontSize: isMobile ? '0.8rem' : '0.9rem',
                         fontWeight: 'bold',
                         display: 'flex',
                         alignItems: 'center',
@@ -618,17 +695,27 @@ export default function Favoritos(props: FavoritosProps) {
             {lugaresFiltrados.length === 0 && filtro && (
               <div style={{
                 textAlign: 'center',
-                padding: '3rem',
+                padding: isMobile ? '2rem 1rem' : '3rem',
                 color: '#666',
                 background: 'white',
                 borderRadius: '1.5rem',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
               }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔍</div>
-                <h3 style={{ color: '#004e92', marginBottom: '0.5rem', fontSize: '1.3rem' }}>
+                <div style={{ 
+                  fontSize: isMobile ? '3rem' : '4rem', 
+                  marginBottom: '1rem' 
+                }}>🔍</div>
+                <h3 style={{ 
+                  color: '#004e92', 
+                  marginBottom: '0.5rem', 
+                  fontSize: isMobile ? '1.1rem' : '1.3rem' 
+                }}>
                   No se encontraron resultados
                 </h3>
-                <p style={{ fontSize: '1rem' }}>
+                <p style={{ 
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  padding: isMobile ? '0 1rem' : '0'
+                }}>
                   No hay lugares favoritos que coincidan con &quot;<strong>{filtro}</strong>&quot;
                 </p>
                 <button
@@ -637,11 +724,11 @@ export default function Favoritos(props: FavoritosProps) {
                     marginTop: '1rem',
                     background: '#004e92',
                     color: 'white',
-                    padding: '0.5rem 1rem',
+                    padding: isMobile ? '0.5rem 1.5rem' : '0.5rem 1rem',
                     border: 'none',
                     borderRadius: '1rem',
                     cursor: 'pointer',
-                    fontSize: '0.9rem'
+                    fontSize: isMobile ? '0.8rem' : '0.9rem'
                   }}
                 >
                   Limpiar filtro
