@@ -32,53 +32,76 @@ export default function Favoritos(props: FavoritosProps) {
   const router = useRouter()
 
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     const fetchFavoritos = async (): Promise<void> => {
       setLoading(true)
       
       try {
-        const { data, error } = await supabase
+        console.log('=== INICIANDO FETCH DE FAVORITOS ===')
+        console.log('Usuario ID:', user.id)
+        
+        // MÉTODO SIMPLIFICADO - Igual que en tu API de recomendaciones
+        
+        // 1. Primero obtenemos los IDs de los lugares favoritos
+        const { data: favoritosData, error: favoritosError } = await supabase
           .from('favoritos')
-          .select('lugar_id, lugar:lugares(id, nombre, descripcion, municipio, url_imagen)')
+          .select('lugar_id')
           .eq('usuario_id', user.id)
 
-        if (error) {
-          console.error('Error al obtener favoritos:', error)
-        } else if (data) {
-          // Manejo seguro sin casting forzado
-          const lugaresValidos: Lugar[] = []
-          
-          data.forEach((item) => {
-            if (item && item.lugar) {
-              // Manejar tanto si lugar es un objeto como si es un array
-              const lugares = Array.isArray(item.lugar) ? item.lugar : [item.lugar]
-              
-              lugares.forEach((lugar) => {
-                if (lugar && 
-                    typeof lugar.id === 'string' && 
-                    typeof lugar.nombre === 'string' &&
-                    typeof lugar.descripcion === 'string' &&
-                    typeof lugar.municipio === 'string' &&
-                    typeof lugar.url_imagen === 'string') {
-                  lugaresValidos.push({
-                    id: lugar.id,
-                    nombre: lugar.nombre,
-                    descripcion: lugar.descripcion,
-                    municipio: lugar.municipio,
-                    url_imagen: lugar.url_imagen
-                  })
-                }
-              })
-            }
-          })
-          
-          setLugares(lugaresValidos)
+        console.log('Paso 1 - Favoritos obtenidos:', favoritosData)
+        console.log('Error en favoritos:', favoritosError)
+
+        if (favoritosError) {
+          console.error('Error al obtener favoritos:', favoritosError)
+          setLugares([])
+          return
         }
+
+        // Si no hay favoritos, establecer array vacío
+        if (!favoritosData || favoritosData.length === 0) {
+          console.log('No se encontraron favoritos para este usuario')
+          setLugares([])
+          return
+        }
+
+        // 2. Extraer los IDs de los lugares
+        const lugarIds = favoritosData.map(fav => fav.lugar_id)
+        console.log('Paso 2 - IDs de lugares:', lugarIds)
+
+        // 3. Obtener la información completa de los lugares
+        const { data: lugaresData, error: lugaresError } = await supabase
+          .from('lugares')
+          .select('id, nombre, descripcion, municipio, url_imagen')
+          .in('id', lugarIds)
+
+        console.log('Paso 3 - Lugares obtenidos:', lugaresData)
+        console.log('Error en lugares:', lugaresError)
+
+        if (lugaresError) {
+          console.error('Error al obtener lugares:', lugaresError)
+          setLugares([])
+          return
+        }
+
+        // 4. Establecer los lugares en el estado
+        if (lugaresData) {
+          console.log('Paso 4 - Estableciendo lugares en estado:', lugaresData.length, 'lugares')
+          setLugares(lugaresData)
+        } else {
+          console.log('No se obtuvieron datos de lugares')
+          setLugares([])
+        }
+
       } catch (err) {
-        console.error('Error al cargar favoritos:', err)
+        console.error('Error general al cargar favoritos:', err)
+        setLugares([])
       } finally {
         setLoading(false)
+        console.log('=== FETCH DE FAVORITOS COMPLETADO ===')
       }
     }
 
@@ -89,6 +112,8 @@ export default function Favoritos(props: FavoritosProps) {
     if (!user) return
     
     try {
+      console.log('Eliminando favorito - Usuario:', user.id, 'Lugar:', lugarId)
+      
       const { error } = await supabase
         .from('favoritos')
         .delete()
@@ -99,7 +124,9 @@ export default function Favoritos(props: FavoritosProps) {
         console.error('Error al eliminar favorito:', error)
         alert('Error al eliminar el favorito. Inténtalo de nuevo.')
       } else {
-        setLugares(lugares.filter(lugar => lugar.id !== lugarId))
+        console.log('Favorito eliminado exitosamente')
+        // Actualizar el estado local eliminando el lugar
+        setLugares(prevLugares => prevLugares.filter(lugar => lugar.id !== lugarId))
       }
     } catch (err) {
       console.error('Error al eliminar favorito:', err)
@@ -118,6 +145,8 @@ export default function Favoritos(props: FavoritosProps) {
       if (sortBy === 'municipio') return (a.municipio || '').localeCompare(b.municipio || '')
       return 0
     })
+
+  console.log('Renderizando componente - Lugares:', lugares.length, 'Filtrados:', lugaresFiltrados.length)
 
   if (!user) {
     return (
@@ -190,7 +219,6 @@ export default function Favoritos(props: FavoritosProps) {
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Decoraciones de fondo */}
           <div style={{
             position: 'absolute',
             top: '-50%',
