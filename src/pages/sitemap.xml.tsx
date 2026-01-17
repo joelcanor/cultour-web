@@ -47,34 +47,52 @@ function generateSiteMap(lugares: Lugar[]) {
            <lastmod>${lugar.updated_at || new Date().toISOString()}</lastmod>
            <changefreq>weekly</changefreq>
            <priority>0.9</priority>
-       </url>
-     `
+       </url>`
        })
        .join('')}
-   </urlset>
- `
+   </urlset>`
 }
 
 function SiteMap() {
   // getServerSideProps hará el trabajo
+  return null
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
-  // Obtener todos los lugares de la base de datos
-  const { data: lugares } = await supabase
-    .from('lugares')
-    .select('id, nombre, updated_at')
+  try {
+    // Obtener todos los lugares de la base de datos
+    const { data: lugares, error } = await supabase
+      .from('lugares')
+      .select('id, nombre, updated_at')
 
-  // Generar el sitemap XML
-  const sitemap = generateSiteMap(lugares || [])
+    if (error) {
+      console.error('Error fetching lugares for sitemap:', error)
+    }
 
-  res.setHeader('Content-Type', 'text/xml')
-  res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate')
-  res.write(sitemap)
-  res.end()
+    // Generar el sitemap XML incluso si hay error (con array vacío)
+    const sitemap = generateSiteMap(lugares || [])
 
-  return {
-    props: {},
+    res.setHeader('Content-Type', 'text/xml; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate')
+    res.write(sitemap)
+    res.end()
+
+    return {
+      props: {},
+    }
+  } catch (err) {
+    console.error('Error generating sitemap:', err)
+    
+    // En caso de error, generar sitemap solo con páginas estáticas
+    const sitemap = generateSiteMap([])
+    
+    res.setHeader('Content-Type', 'text/xml; charset=utf-8')
+    res.write(sitemap)
+    res.end()
+
+    return {
+      props: {},
+    }
   }
 }
 
