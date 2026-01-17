@@ -1,0 +1,36 @@
+# https://cultour-web-fpd3.vercel.app/robots.txt
+
+# Permitir a todos los bots indexar todo el sitio
+User-agent: *
+Allow: /
+
+# Bloquear páginas de administración
+Disallow: /admin/
+Disallow: /api/
+
+# Bloquear páginas de autenticación
+Disallow: /auth/
+
+# Permitir explícitamente páginas importantes
+Allow: /lugares/
+Allow: /recomendaciones
+Allow: /nosotros
+Allow: /contacto
+Allow: /perfil
+Allow: /favoritos
+
+# Configuración para Googlebot
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Configuración para Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Ubicación del sitemap
+Sitemap: https://cultour-web-fpd3.vercel.app/sitemap.xml
+
+# Host principal
+Host: https://cultour-web-fpd3.vercel.app
